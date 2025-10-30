@@ -1087,7 +1087,7 @@ html {
 .whatsapp-float {
     position: fixed;
     right: 20px;
-    bottom: 20px;
+    bottom: 28px; /* subir un poco el botón */
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -1099,6 +1099,17 @@ html {
     box-shadow: 0 8px 24px rgba(0,0,0,0.25);
     z-index: 1000;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: fixed;
+    overflow: visible;
+}
+.whatsapp-float::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.25);
+    animation: whatsappRipple 2.8s ease-out infinite;
 }
 .whatsapp-float i {
     font-size: 28px;
@@ -1111,12 +1122,27 @@ html {
 @media (max-width: 576px) {
     .whatsapp-float {
         right: 16px;
-        bottom: 16px;
+        bottom: 24px; /* subir un poco en móviles */
         width: 56px;
         height: 56px;
     }
     .whatsapp-float i {
         font-size: 26px;
+    }
+}
+
+@keyframes whatsappRipple {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.25);
+        opacity: 1;
+    }
+    60% {
+        box-shadow: 0 0 0 14px rgba(37, 211, 102, 0.0);
+        opacity: 0.6;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.0);
+        opacity: 0.4;
     }
 }
 
