@@ -307,6 +307,9 @@ nav ul li a:hover::after {
     grid-template-columns: repeat(2, 1fr); /* 2 columnas: 2 arriba y 2 abajo */
     gap: 35px;
     margin-top: 50px;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto; /* centrar el bloque bajo el título */
 }
 
 .service-card {
@@ -354,6 +357,7 @@ nav ul li a:hover::after {
     -ms-overflow-style: none; /* IE/Edge */
     user-select: none; /* Evitar selección de texto al arrastrar */
     position: relative; /* Para posicionar flechas de navegación */
+    justify-content: center; /* alinear el strip al centro bajo el título */
 }
 
 .gallery-grid::-webkit-scrollbar { /* Chrome/Safari */
@@ -511,6 +515,8 @@ nav ul li a:hover::after {
     grid-template-columns: 1fr 1fr;
     gap: 50px;
     align-items: center;
+    max-width: 1100px;
+    margin: 0 auto; /* centrar el contenido bajo el título */
 }
 
 .about-text p {
@@ -1157,6 +1163,8 @@ html {
     gap: 18px;
     justify-items: center;
     text-align: center;
+    max-width: 960px;
+    margin: 0 auto; /* centrar el conjunto bajo el título */
 }
 .contact-info .info-item {
     width: 100%;
