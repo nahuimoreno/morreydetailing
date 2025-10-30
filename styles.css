@@ -1131,11 +1131,40 @@ html {
 }
 .contact-info .info-item p {
     margin: 0;
+    text-align: center;
+}
+.contact-info .info-item a {
+    display: inline-block;
+    text-align: center;
+    color: #fff;
+    text-decoration: none;
+}
+.contact-info .info-item a:hover {
+    text-decoration: underline;
 }
 
 @media (max-width: 576px) {
     .contact-info {
         grid-template-columns: 1fr;
         gap: 16px;
+    }
+}
+
+/* Centrado vertical de “Nosotros” y “Contacto” en móvil */
+@media (max-width: 576px) {
+    .about .container,
+    .contact .container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    .about-image {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
     }
 }
