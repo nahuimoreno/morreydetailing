@@ -810,6 +810,19 @@ footer {
         width: 65%;
         max-width: 460px;
     }
+
+    /* Centrado a la mitad de la pantalla (tablets) */
+    .services .container,
+    .gallery .container,
+    .about .container,
+    .contact .container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
 }
 
 @media (max-width: 768px) {
