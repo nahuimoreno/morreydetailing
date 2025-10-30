@@ -70,51 +70,67 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(tryPlay, 600);
     }
     
-    // Formulario de contacto
+    // Formulario de contacto: enviar por Email o WhatsApp
     const contactForm = document.querySelector('.contact-form form');
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Aquí normalmente enviarías los datos del formulario a un servidor
-            // Para esta demo, solo mostraremos un mensaje de éxito
-            
-            const formInputs = contactForm.querySelectorAll('input, textarea');
-            let isValid = true;
-            
-            // Validación básica del formulario
-            formInputs.forEach(input => {
+        const nameInput = contactForm.querySelector('input[type="text"]');
+        const emailInput = contactForm.querySelector('input[type="email"]');
+        const phoneInput = contactForm.querySelector('input[type="tel"]');
+        const messageInput = contactForm.querySelector('textarea');
+
+        const btnEmail = contactForm.querySelector('.btn-email');
+        const btnWhatsApp = contactForm.querySelector('.btn-whatsapp');
+
+        const buildMessage = () => {
+            const name = (nameInput?.value || '').trim();
+            const email = (emailInput?.value || '').trim();
+            const phone = (phoneInput?.value || '').trim();
+            const msg = (messageInput?.value || '').trim();
+            return `Hola Morrey Detailing,%0A%0A` +
+                   `Nombre: ${encodeURIComponent(name)}%0A` +
+                   `Email: ${encodeURIComponent(email)}%0A` +
+                   `Teléfono: ${encodeURIComponent(phone)}%0A` +
+                   `Mensaje:%0A${encodeURIComponent(msg)}%0A%0A` +
+                   `Enviado desde la web.`;
+        };
+
+        const validateForm = () => {
+            let valid = true;
+            [nameInput, emailInput, phoneInput, messageInput].forEach(input => {
+                if (!input) return;
                 if (!input.value.trim()) {
-                    isValid = false;
+                    valid = false;
                     input.style.borderColor = 'red';
                 } else {
-                    input.style.borderColor = '#ddd';
+                    input.style.borderColor = '#333';
                 }
             });
-            
-            if (isValid) {
-                // Crear y mostrar mensaje de éxito
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-message';
-                successMessage.textContent = '¡Mensaje enviado con éxito! Nos pondremos en contacto contigo pronto.';
-                successMessage.style.color = 'green';
-                successMessage.style.padding = '10px';
-                successMessage.style.marginTop = '10px';
-                successMessage.style.backgroundColor = '#e8f5e9';
-                successMessage.style.borderRadius = '5px';
-                
-                // Insertar mensaje después del formulario
-                contactForm.appendChild(successMessage);
-                
-                // Limpiar formulario
-                contactForm.reset();
-                
-                // Eliminar mensaje después de 5 segundos
-                setTimeout(() => {
-                    successMessage.remove();
-                }, 5000);
-            }
-        });
+            return valid;
+        };
+
+        // Enviar por Email
+        if (btnEmail) {
+            btnEmail.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!validateForm()) return;
+                const subject = encodeURIComponent('Morrey Detailing - Agenda de Cita');
+                const body = buildMessage();
+                const mailto = `mailto:contacto@morreydetailing.com?subject=${subject}&body=${body}`;
+                window.location.href = mailto;
+            });
+        }
+
+        // Enviar por WhatsApp
+        if (btnWhatsApp) {
+            btnWhatsApp.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!validateForm()) return;
+                const text = buildMessage();
+                const phoneNumber = '5491156359321';
+                const waUrl = `https://wa.me/${phoneNumber}?text=${text}`;
+                window.open(waUrl, '_blank');
+            });
+        }
     }
     
     // Efectos de scroll con IntersectionObserver

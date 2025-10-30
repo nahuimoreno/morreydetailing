@@ -734,11 +734,11 @@ footer {
 
 /* WhatsApp como solo logo */
 .btn-whatsapp.btn-icon {
-    background: transparent;
-    border-color: rgba(255, 255, 255, 0.25);
+    background: #25D366; /* verde WhatsApp */
+    border-color: #25D366;
     box-shadow: none;
 }
-.btn-whatsapp.btn-icon i { color: #25D366; font-size: 22px; }
+.btn-whatsapp.btn-icon i { color: #fff; font-size: 22px; }
 
 /* Email azul y blanco */
 .btn-email.btn-icon {
