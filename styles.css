@@ -882,6 +882,25 @@ footer {
     }
 }
 
+/* Centrado en Contacto para móviles y tablets */
+@media (max-width: 768px) {
+    .contact .container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    .contact-info {
+        grid-template-columns: 1fr; /* una columna centrada para items */
+        gap: 16px;
+        width: 100%;
+        max-width: 520px; /* límite para que se vea bien centrado */
+        margin: 0 auto;
+    }
+}
+
 @media (max-width: 576px) {
     /* Hero optimizado para móviles pequeños */
     .hero {
