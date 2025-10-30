@@ -1063,3 +1063,40 @@ html {
     scroll-behavior: smooth;
 }
 /* Nota: no ocultar el video del hero globalmente; mantener reproducción activa */
+
+/* Botón de WhatsApp flotante */
+.whatsapp-float {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #25D366;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    z-index: 1000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.whatsapp-float i {
+    font-size: 28px;
+}
+.whatsapp-float:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+@media (max-width: 576px) {
+    .whatsapp-float {
+        right: 16px;
+        bottom: 16px;
+        width: 56px;
+        height: 56px;
+    }
+    .whatsapp-float i {
+        font-size: 26px;
+    }
+}
