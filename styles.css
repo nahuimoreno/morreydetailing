@@ -1172,27 +1172,4 @@ html {
     }
 }
 
-/* Centrado horizontal global para secciones y contenido */
-.services .container,
-.gallery .container,
-.about .container,
-.contact .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.services-grid {
-    width: 100%;
-    max-width: 1100px;
-    margin: 50px auto 0;
-    justify-items: center;
-}
-
-.contact-container {
-    justify-items: center;
-}
-
-.gallery-grid {
-    justify-content: center;
-}
+/* (revertido) centrado global eliminado para volver al diseño anterior */
