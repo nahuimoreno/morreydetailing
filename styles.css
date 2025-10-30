@@ -1108,16 +1108,10 @@ html {
     box-shadow: none;
     border: none;
     display: grid;
-    grid-template-columns: 1fr 1fr; /* dos columnas: arriba reloj centrado, abajo teléfono e Instagram */
-    width: 100%;
+    grid-template-columns: repeat(3, minmax(200px, 1fr));
     gap: 18px;
     justify-items: center;
     text-align: center;
-}
-
-/* Reloj (segundo item) ocupa toda la fila superior y queda centrado */
-.contact-info .info-item:nth-child(2) {
-    grid-column: 1 / -1;
 }
 .contact-info .info-item {
     width: 100%;
