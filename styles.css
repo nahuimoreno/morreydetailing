@@ -1108,9 +1108,10 @@ html {
     box-shadow: none;
     border: none;
     display: grid;
-    grid-template-columns: repeat(3, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, max-content);
     gap: 18px;
     justify-items: center;
+    justify-content: center; /* centrar el grupo de columnas bajo el título */
     text-align: center;
 }
 .contact-info .info-item {
