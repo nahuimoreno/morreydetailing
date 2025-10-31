@@ -541,15 +541,6 @@ nav ul li a:hover::after {
     gap: 40px;
 }
 
-.contact .container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
 .contact-info {
     background-color: var(--panel-gray);
     padding: 30px;
@@ -1191,6 +1182,16 @@ html {
         box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.0);
         opacity: 0.4;
     }
+}
+
+/* Centrado del contenedor de contacto en desktop */
+.contact .container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 /* Contacto: información en columnas, logo arriba y texto abajo */
