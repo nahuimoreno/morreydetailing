@@ -918,6 +918,17 @@ footer {
         max-width: 520px; /* límite para que se vea bien centrado */
         margin: 0 auto;
     }
+    
+    /* Galería optimizada para móviles */
+    .gallery-item {
+        flex: 0 0 calc((100% - var(--gallery-gap)) / 2); /* 2 imágenes por fila en móvil */
+        aspect-ratio: 4 / 3; /* proporción más cuadrada para móvil */
+    }
+    
+    .gallery-grid {
+        --gallery-gap: 15px; /* menos espacio entre imágenes */
+        margin-top: 30px; /* menos margen superior */
+    }
 }
 
 @media (max-width: 576px) {
@@ -960,10 +971,18 @@ footer {
         gap: 25px;
     }
     
-    /* Galería en una columna para móviles */
+    /* Galería optimizada para móviles pequeños */
     .gallery-item {
-        flex: 0 0 calc(100% - 10px); /* Una columna en móviles */
-        aspect-ratio: 4 / 3; /* proporción más cuadrada */
+        flex: 0 0 calc(100% - 10px); /* Una columna en móviles pequeños */
+        aspect-ratio: 16 / 10; /* proporción más panorámica y compacta */
+        max-width: 320px; /* límite máximo de ancho */
+        margin: 0 auto; /* centrar cada imagen */
+    }
+    
+    .gallery-grid {
+        --gallery-gap: 12px; /* espacio más reducido */
+        margin-top: 25px; /* menos margen superior */
+        padding: 0 15px; /* padding lateral para mejor visualización */
     }
     
     /* Header más compacto */
