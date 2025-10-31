@@ -1258,3 +1258,7 @@ html {
 }
 
 /* (revertido) centrado global eliminado para volver al diseño anterior */
+/* Evitar auto-escalado de texto en iOS (mantiene escala fija) */
+html {
+    -webkit-text-size-adjust: 100%;
+}
