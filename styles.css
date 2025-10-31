@@ -536,8 +536,11 @@ nav ul li a:hover::after {
 
 /* Sección de Contacto */
 .contact-container {
-    display: grid;
-    grid-template-columns: 1fr; /* solo una columna ya que quitamos el formulario */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
     gap: 40px;
 }
 
@@ -1192,6 +1195,7 @@ html {
     justify-content: center;
     align-items: center;
     text-align: center;
+    padding: 0 20px; /* padding lateral para mejor visualización */
 }
 
 /* Contacto: información en columnas, logo arriba y texto abajo */
