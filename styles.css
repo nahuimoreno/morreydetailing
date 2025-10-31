@@ -541,6 +541,15 @@ nav ul li a:hover::after {
     gap: 40px;
 }
 
+.contact .container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
 .contact-info {
     background-color: var(--panel-gray);
     padding: 30px;
