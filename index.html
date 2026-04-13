@@ -125,7 +125,14 @@
       { icon:'fa-hand-holding-heart',title:'Cuidado total del vehículo', desc:'Tratamos tu auto con el mismo respeto y cuidado que si fuera el nuestro.' },
     ];
 
-    const TIMES = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'];
+    function getAvailableTimes(dateStr) {
+      if (!dateStr) return [];
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dow = new Date(y, m - 1, d).getDay();
+      if (dow === 0) return []; // Domingo - cerrado
+      if (dow === 6) return ['09:00','10:00','11:00','12:00']; // Sábado hasta 13hs
+      return ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00']; // Lun-Vie
+    }
 
     const NAV_LINKS = [
       { label:'Inicio',    id:'inicio'    },
@@ -326,7 +333,7 @@
     function Stats() {
       const ref = useReveal();
       const data = [
-        { val:'10+',  label:'Años de experiencia'      },
+        { val:'5+',   label:'Años de experiencia'      },
         { val:'500+', label:'Vehículos tratados'        },
         { val:'100%', label:'Satisfacción garantizada'  },
         { val:'7',    label:'Servicios especializados'  },
@@ -607,10 +614,14 @@
                 {/* Fecha */}
                 <div>
                   <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Fecha *</label>
-                  <input type="date" value={form.date} onChange={e => upd('date', e.target.value)}
+                  <input type="date" value={form.date}
+                    onChange={e => { upd('date', e.target.value); upd('time', ''); }}
                     min={new Date().toISOString().split('T')[0]}
                     className={base('date')} />
                   {err.date && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                  {form.date && getAvailableTimes(form.date).length === 0 && (
+                    <p className="text-red-400/70 text-[11px] mt-1">Domingos cerrado</p>
+                  )}
                 </div>
 
                 {/* Horario */}
@@ -618,9 +629,12 @@
                   <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Horario *</label>
                   <select value={form.time} onChange={e => upd('time', e.target.value)}
                     style={{ background:'#0d0d0d' }}
-                    className={base('time') + ' cursor-pointer'}>
-                    <option value="">Seleccionar horario</option>
-                    {TIMES.map(t => <option key={t} value={t}>{t} hs</option>)}
+                    disabled={!form.date || getAvailableTimes(form.date).length === 0}
+                    className={base('time') + ' cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed'}>
+                    <option value="">
+                      {!form.date ? 'Primero elegí una fecha' : getAvailableTimes(form.date).length === 0 ? 'Domingos cerrado' : 'Seleccionar horario'}
+                    </option>
+                    {getAvailableTimes(form.date).map(t => <option key={t} value={t}>{t} hs</option>)}
                   </select>
                   {err.time && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
                 </div>
