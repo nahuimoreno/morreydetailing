@@ -1,5 +1,42 @@
 // Esperar a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
+    // ----- Gestión de galería dinámica (desde panel admin) -----
+    (function applyGalleryCustomizations() {
+        const gallery = document.querySelector('.gallery-grid');
+        if (!gallery) return;
+
+        // Ocultar imágenes marcadas como escondidas en el admin
+        try {
+            const hidden = JSON.parse(localStorage.getItem('morrey_hidden_gallery') || '[]');
+            hidden.forEach(src => {
+                gallery.querySelectorAll('.gallery-item').forEach(item => {
+                    const img = item.querySelector('img');
+                    if (img && img.getAttribute('src') === src) item.remove();
+                });
+            });
+        } catch (e) {}
+
+        // Agregar imágenes subidas desde el admin
+        try {
+            const extras = JSON.parse(localStorage.getItem('morrey_extra_gallery') || '[]');
+            extras.forEach(extra => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                const img = document.createElement('img');
+                img.src = extra.src;
+                img.alt = extra.name || 'Trabajo';
+                img.loading = 'lazy';
+                item.appendChild(img);
+                gallery.appendChild(item);
+            });
+        } catch (e) {}
+
+        // Lazy loading a todas las imágenes de galería
+        gallery.querySelectorAll('img').forEach(img => {
+            if (!img.loading) img.loading = 'lazy';
+        });
+    })();
+
     // Menú móvil toggle
     const menuToggle = document.querySelector('.menu-toggle');
     const navMenu = document.querySelector('nav ul');

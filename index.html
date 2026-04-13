@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
     <title>Morrey Detailing - Taller de Autos</title>
+    <meta name="description" content="Morrey Detailing - Especialistas en detailing automotriz. Lavados, tapizados, cerámicos, acrílicos y restauración de ópticas. Agendá tu turno online.">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="logo.jpg" type="image/jpeg">
@@ -44,7 +45,7 @@
             <div class="hero-content">
                 <h2>Expertos en Detailing Automotriz</h2>
                 <p>Cuidamos tu vehículo como si fuera nuestro</p>
-                <a href="#contacto" class="btn btn-primary btn-cta">Agendar Cita</a>
+                <button id="openBookingBtn" class="btn btn-cta">Agendar Turno</button>
             </div>
         </div>
     </section>
@@ -164,6 +165,12 @@
                         <p><a href="https://www.instagram.com/morrey.detail/" target="_blank" rel="noopener noreferrer">@morrey.detail</a></p>
                     </div>
                 </div>
+                <div class="contact-booking-cta" data-reveal data-effect="fade-up">
+                    <p>¿Listo para darle el mejor cuidado a tu auto?</p>
+                    <button id="openBookingBtn2" class="btn btn-cta" onclick="openBookingModal()">
+                        <i class="fas fa-calendar-check"></i> Agendar Turno Online
+                    </button>
+                </div>
             </div>
         </div>
     </section>
@@ -192,6 +199,7 @@
             </div>
             <div class="footer-bottom">
                 <p>© 2025 Morrey Detailing. Todos los derechos reservados.</p>
+                <p class="footer-admin-link"><a href="admin.html">Admin</a></p>
             </div>
         </div>
     </footer>
@@ -201,6 +209,86 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
+    <!-- Modal de Turnos -->
+    <div id="bookingModal" class="bm-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Agendar turno">
+      <div class="bm-box">
+        <button class="bm-close" id="bmClose" aria-label="Cerrar">&times;</button>
+
+        <div class="bm-steps-indicator">
+          <span class="bs-dot active" id="bsDot1">1</span>
+          <span class="bs-line"></span>
+          <span class="bs-dot" id="bsDot2">2</span>
+          <span class="bs-line"></span>
+          <span class="bs-dot" id="bsDot3">3</span>
+        </div>
+
+        <!-- Paso 1: Servicio + Fecha -->
+        <div id="bookStep1" class="bm-step">
+          <h3 class="bm-title">Elegí el servicio y la fecha</h3>
+
+          <div class="bm-group">
+            <label for="bookService">Tipo de servicio</label>
+            <select id="bookService">
+              <option value="">-- Seleccionar servicio --</option>
+              <option value="Lavado detallado">Lavado detallado</option>
+              <option value="Limpieza de tapizados / motor">Limpieza de tapizados / motor</option>
+              <option value="Abrillantado / Acrílico / Cerámico">Abrillantado / Acrílico / Cerámico</option>
+              <option value="Restauración de ópticas">Restauración de ópticas</option>
+            </select>
+          </div>
+
+          <div class="bm-calendar">
+            <div class="bcal-header">
+              <button class="bcal-nav" id="bCalPrev" aria-label="Mes anterior">&#8249;</button>
+              <span id="bCalTitle"></span>
+              <button class="bcal-nav" id="bCalNext" aria-label="Mes siguiente">&#8250;</button>
+            </div>
+            <div class="bcal-weekdays">
+              <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+            </div>
+            <div class="bcal-grid" id="bCalGrid"></div>
+          </div>
+
+          <p class="bm-date-text" id="bookSelectedDateText">Seleccioná una fecha disponible</p>
+          <button class="btn btn-cta bm-full-btn" id="bookStep1Next" disabled>Siguiente →</button>
+        </div>
+
+        <!-- Paso 2: Datos personales -->
+        <div id="bookStep2" class="bm-step" style="display:none">
+          <h3 class="bm-title">Tus datos de contacto</h3>
+
+          <div class="bm-group">
+            <label for="bookName">Nombre completo *</label>
+            <input type="text" id="bookName" placeholder="Tu nombre y apellido" autocomplete="name">
+          </div>
+          <div class="bm-group">
+            <label for="bookEmail">Email *</label>
+            <input type="email" id="bookEmail" placeholder="tu@email.com" autocomplete="email">
+          </div>
+          <div class="bm-group">
+            <label for="bookPhone">Celular *</label>
+            <input type="tel" id="bookPhone" placeholder="11 1234-5678" autocomplete="tel">
+          </div>
+
+          <div class="bm-actions">
+            <button class="btn btn-primary" id="bookStep2Back">← Volver</button>
+            <button class="btn btn-cta" id="bookStep2Submit">Confirmar Turno</button>
+          </div>
+        </div>
+
+        <!-- Paso 3: Confirmación -->
+        <div id="bookStep3" class="bm-step bm-success" style="display:none">
+          <div class="bm-success-icon"><i class="fas fa-check-circle"></i></div>
+          <h3>¡Turno agendado!</h3>
+          <div class="bm-summary" id="bSummary"></div>
+          <p class="bm-wa-note">¿Querés avisarnos también por WhatsApp?</p>
+          <button class="btn btn-whatsapp" id="bWABtn"><i class="fab fa-whatsapp"></i> Avisar por WhatsApp</button>
+          <button class="btn btn-primary bm-close-success" id="bCloseBtn">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
     <script src="script.js"></script>
+    <script src="booking.js"></script>
 </body>
 </html>

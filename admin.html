@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Morrey Detailing</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="icon" href="logo.jpg" type="image/jpeg">
+  <style>
+    :root {
+      --yellow: #ffde00;
+      --yellow-dim: rgba(255,222,0,0.15);
+      --bg: #0a0a0a;
+      --surface: #111;
+      --surface2: #181818;
+      --border: rgba(255,255,255,0.07);
+      --text: #fff;
+      --text-muted: rgba(255,255,255,0.5);
+      --red: #ff4d4d;
+      --green: #2ecc71;
+      --orange: #f39c12;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+    }
+
+    /* ---- LOGIN ---- */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,222,0,0.18);
+      border-radius: 18px;
+      padding: 44px 36px 36px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .login-logo {
+      height: 70px;
+      width: auto;
+      object-fit: contain;
+      margin-bottom: 24px;
+    }
+    .login-card h1 {
+      font-size: 1.35rem;
+      margin-bottom: 6px;
+    }
+    .login-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+    }
+    .login-group {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .login-group input {
+      width: 100%;
+      padding: 13px 44px 13px 16px;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .login-group input:focus { outline: none; border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,222,0,0.1); }
+    .login-group .toggle-pw {
+      position: absolute;
+      right: 13px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--text-muted); cursor: pointer;
+      font-size: 1rem; transition: color 0.15s;
+    }
+    .login-group .toggle-pw:hover { color: #fff; }
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--yellow);
+      color: #000;
+      border: none;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      margin-top: 6px;
+    }
+    .login-btn:hover { background: #e6c800; transform: translateY(-1px); }
+    .login-error {
+      color: var(--red);
+      font-size: 0.88rem;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* ---- DASHBOARD ---- */
+    #dashboard { display: none; flex-direction: column; min-height: 100vh; }
+
+    .admin-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .admin-header-left { display: flex; align-items: center; gap: 14px; }
+    .admin-header-logo { height: 44px; width: auto; object-fit: contain; }
+    .admin-header h2 { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
+    .admin-header-right { display: flex; align-items: center; gap: 12px; }
+    .btn-site {
+      padding: 7px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-site:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .btn-logout {
+      padding: 7px 16px;
+      background: rgba(255,77,77,0.1);
+      border: 1px solid rgba(255,77,77,0.25);
+      border-radius: 20px;
+      color: var(--red);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-logout:hover { background: rgba(255,77,77,0.2); }
+
+    /* Tabs */
+    .admin-tabs {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      padding: 0 24px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .admin-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 14px 20px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tab-btn:hover { color: #fff; }
+    .tab-btn.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+
+    /* Content */
+    .admin-content { flex: 1; padding: 28px 24px; max-width: 1100px; margin: 0 auto; width: 100%; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 20px 18px;
+    }
+    .stat-card .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--yellow);
+      line-height: 1;
+    }
+    .stat-card .stat-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Filters */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .filter-btn {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+    .filter-btn.active {
+      background: var(--yellow-dim);
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    /* Bookings list */
+    .bookings-list { display: flex; flex-direction: column; gap: 10px; }
+    .booking-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+    .booking-card:hover { border-color: rgba(255,255,255,0.14); }
+    .booking-card.status-confirmed { border-left: 3px solid var(--green); }
+    .booking-card.status-pending { border-left: 3px solid var(--orange); }
+    .booking-card.status-cancelled { border-left: 3px solid rgba(255,255,255,0.15); opacity: 0.5; }
+
+    .booking-date-box {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      text-align: center;
+      min-width: 64px;
+    }
+    .booking-date-box .bdb-day { font-size: 1.6rem; font-weight: 700; line-height: 1; color: var(--yellow); }
+    .booking-date-box .bdb-month { font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
+
+    .booking-info h4 { font-size: 0.97rem; margin-bottom: 4px; }
+    .booking-info .bi-service {
+      display: inline-block;
+      background: var(--yellow-dim);
+      color: var(--yellow);
+      font-size: 0.75rem;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .booking-info .bi-contact { font-size: 0.83rem; color: var(--text-muted); display: flex; gap: 14px; flex-wrap: wrap; }
+    .booking-info .bi-contact span { display: flex; align-items: center; gap: 5px; }
+
+    .booking-actions-col { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .ba-btn {
+      padding: 7px 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .ba-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .ba-btn.confirm { border-color: rgba(46,204,113,0.3); color: var(--green); }
+    .ba-btn.confirm:hover { background: rgba(46,204,113,0.1); }
+    .ba-btn.cancel { border-color: rgba(255,77,77,0.3); color: var(--red); }
+    .ba-btn.cancel:hover { background: rgba(255,77,77,0.1); }
+    .ba-btn.delete { border-color: rgba(255,77,77,0.15); color: rgba(255,77,77,0.5); }
+    .ba-btn.delete:hover { color: var(--red); border-color: rgba(255,77,77,0.4); }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-status.pending { background: rgba(243,156,18,0.15); color: var(--orange); }
+    .badge-status.confirmed { background: rgba(46,204,113,0.15); color: var(--green); }
+    .badge-status.cancelled { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 16px; opacity: 0.3; display: block; }
+
+    /* Admin Calendar */
+    .cal-admin-wrap {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 800px) {
+      .cal-admin-wrap { grid-template-columns: 1fr; }
+    }
+
+    .admin-cal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .admin-cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .admin-cal-header h3 { font-size: 1.05rem; text-transform: capitalize; }
+    .acal-nav {
+      background: none;
+      border: 1px solid var(--border);
+      color: #fff;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .acal-nav:hover { background: var(--yellow-dim); border-color: var(--yellow); }
+
+    .admin-cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7,1fr);
+      gap: 3px;
+      margin-bottom: 8px;
+    }
+    .admin-cal-weekdays span {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 4px 0;
+    }
+    .admin-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7,1fr);
+      gap: 4px;
+    }
+    .acal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      position: relative;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      color: var(--text);
+      gap: 2px;
+    }
+    .acal-cell:hover:not(.empty) { background: rgba(255,255,255,0.05); border-color: var(--border); }
+    .acal-cell.today { border-color: rgba(255,222,0,0.4); }
+    .acal-cell.selected { background: var(--yellow-dim); border-color: var(--yellow); }
+    .acal-cell.empty { cursor: default; }
+    .acal-cell.past { color: rgba(255,255,255,0.2); }
+    .acal-count {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 10px;
+      line-height: 1.2;
+    }
+    .acal-count.c1 { background: rgba(46,204,113,0.2); color: var(--green); }
+    .acal-count.c2 { background: rgba(243,156,18,0.2); color: var(--orange); }
+    .acal-count.c3 { background: rgba(255,77,77,0.2); color: var(--red); }
+
+    .day-detail-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .day-detail-box h4 {
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      color: var(--text-muted);
+      text-transform: capitalize;
+    }
+    .day-detail-box h4 span { color: var(--yellow); }
+    .day-booking-item {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      font-size: 0.88rem;
+    }
+    .day-booking-item .dbi-name { font-weight: 600; margin-bottom: 4px; }
+    .day-booking-item .dbi-service { color: var(--yellow); font-size: 0.8rem; margin-bottom: 6px; }
+    .day-booking-item .dbi-contact { color: var(--text-muted); font-size: 0.8rem; display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* Gallery */
+    .gallery-admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .btn-upload {
+      padding: 10px 20px;
+      background: var(--yellow);
+      color: #000;
+      border: none;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-upload:hover { background: #e6c800; transform: translateY(-1px); }
+    #photoUploadInput { display: none; }
+
+    .gallery-admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .ga-item {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .ga-item:hover { border-color: rgba(255,255,255,0.2); }
+    .ga-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .ga-item.hidden-img img { opacity: 0.25; filter: grayscale(1); }
+    .ga-item-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .ga-item:hover .ga-item-overlay { opacity: 1; }
+    .ga-btn {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .ga-btn:hover { background: rgba(255,255,255,0.15); }
+    .ga-btn.del { border-color: rgba(255,77,77,0.5); color: var(--red); }
+    .ga-btn.del:hover { background: rgba(255,77,77,0.2); }
+    .ga-hidden-badge {
+      position: absolute;
+      top: 6px; left: 6px;
+      background: rgba(0,0,0,0.7);
+      color: rgba(255,255,255,0.5);
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      display: none;
+    }
+    .ga-item.hidden-img .ga-hidden-badge { display: block; }
+    .ga-extra-badge {
+      position: absolute;
+      top: 6px; right: 6px;
+      background: var(--yellow-dim);
+      color: var(--yellow);
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    /* Settings */
+    .settings-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .settings-section h3 {
+      font-size: 1rem;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      color: var(--yellow);
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .settings-row label {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      min-width: 180px;
+    }
+    .settings-input {
+      flex: 1;
+      min-width: 160px;
+      max-width: 280px;
+      padding: 10px 14px;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      border-radius: 9px;
+      color: #fff;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    .settings-input:focus { outline: none; border-color: var(--yellow); }
+    .btn-save {
+      padding: 10px 22px;
+      background: var(--yellow);
+      color: #000;
+      border: none;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-save:hover { background: #e6c800; }
+    .save-msg {
+      font-size: 0.85rem;
+      color: var(--green);
+      display: none;
+      margin-left: 8px;
+    }
+
+    /* Danger zone */
+    .danger-zone {
+      background: rgba(255,77,77,0.05);
+      border: 1px solid rgba(255,77,77,0.15);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .danger-zone h3 {
+      font-size: 0.95rem;
+      color: var(--red);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-danger {
+      padding: 9px 18px;
+      background: rgba(255,77,77,0.1);
+      border: 1px solid rgba(255,77,77,0.3);
+      color: var(--red);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover { background: rgba(255,77,77,0.2); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 24px;
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 0.9rem;
+      z-index: 9999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s;
+      max-width: 320px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(46,204,113,0.4); color: var(--green); }
+    .toast.error { border-color: rgba(255,77,77,0.4); color: var(--red); }
+
+    /* Modal confirm */
+    .confirm-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9998;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      padding: 20px;
+    }
+    .confirm-overlay.active { opacity: 1; pointer-events: all; }
+    .confirm-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .confirm-box h3 { margin-bottom: 10px; font-size: 1.1rem; }
+    .confirm-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+    .confirm-btns { display: flex; gap: 12px; justify-content: center; }
+    .confirm-yes { padding: 10px 24px; background: var(--red); border: none; border-radius: 25px; color: #fff; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .confirm-no { padding: 10px 24px; background: transparent; border: 1px solid var(--border); border-radius: 25px; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
+
+    @media (max-width: 700px) {
+      .admin-content { padding: 20px 14px; }
+      .booking-card { grid-template-columns: auto 1fr; }
+      .booking-actions-col { grid-column: 1 / -1; justify-content: flex-start; }
+      .admin-header h2 { display: none; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .login-card { padding: 32px 22px 28px; }
+      .admin-header { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <img src="logo2.5.jpg" alt="Logo" class="login-logo">
+    <h1>Panel de Administración</h1>
+    <p>Morrey Detailing</p>
+    <div class="login-group">
+      <input type="password" id="loginPw" placeholder="Contraseña" autocomplete="current-password">
+      <button class="toggle-pw" onclick="togglePw()" aria-label="Ver contraseña">
+        <i class="fas fa-eye" id="pwEyeIcon"></i>
+      </button>
+    </div>
+    <button class="login-btn" onclick="doLogin()"><i class="fas fa-lock-open"></i> Ingresar</button>
+    <p class="login-error" id="loginError"><i class="fas fa-exclamation-circle"></i> Contraseña incorrecta</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <img src="logo2.5.jpg" alt="Logo" class="admin-header-logo">
+      <h2>Panel Admin</h2>
+    </div>
+    <div class="admin-header-right">
+      <a href="index.html" class="btn-site" target="_blank"><i class="fas fa-external-link-alt"></i> Ver sitio</a>
+      <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+    </div>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="tab-btn active" onclick="switchTab('turnos', this)">
+      <i class="fas fa-calendar-check"></i> Turnos
+    </button>
+    <button class="tab-btn" onclick="switchTab('calendario', this)">
+      <i class="fas fa-calendar-alt"></i> Calendario
+    </button>
+    <button class="tab-btn" onclick="switchTab('galeria', this)">
+      <i class="fas fa-images"></i> Galería
+    </button>
+    <button class="tab-btn" onclick="switchTab('ajustes', this)">
+      <i class="fas fa-cog"></i> Ajustes
+    </button>
+  </nav>
+
+  <main class="admin-content">
+
+    <!-- TAB: TURNOS -->
+    <div id="tab-turnos" class="tab-panel active">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="filter-row" id="filterRow">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Todos</button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">Pendientes</button>
+        <button class="filter-btn" onclick="setFilter('confirmed', this)">Confirmados</button>
+        <button class="filter-btn" onclick="setFilter('cancelled', this)">Cancelados</button>
+        <button class="filter-btn" onclick="setFilter('upcoming', this)">Próximos</button>
+      </div>
+      <div class="bookings-list" id="bookingsList"></div>
+    </div>
+
+    <!-- TAB: CALENDARIO -->
+    <div id="tab-calendario" class="tab-panel">
+      <div class="cal-admin-wrap">
+        <div class="admin-cal-box">
+          <div class="admin-cal-header">
+            <button class="acal-nav" onclick="acalNav(-1)">&#8249;</button>
+            <h3 id="acalTitle"></h3>
+            <button class="acal-nav" onclick="acalNav(1)">&#8250;</button>
+          </div>
+          <div class="admin-cal-weekdays">
+            <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+          </div>
+          <div class="admin-cal-grid" id="acalGrid"></div>
+        </div>
+        <div class="day-detail-box">
+          <h4 id="dayDetailTitle">Seleccioná un día</h4>
+          <div id="dayDetailList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: GALERÍA -->
+    <div id="tab-galeria" class="tab-panel">
+      <div class="gallery-admin-header">
+        <div>
+          <h3 style="font-size:1rem; margin-bottom:4px;">Gestión de Galería</h3>
+          <p style="color:var(--text-muted); font-size:0.85rem;" id="galleryStats">Cargando...</p>
+        </div>
+        <button class="btn-upload" onclick="document.getElementById('photoUploadInput').click()">
+          <i class="fas fa-plus"></i> Subir foto
+        </button>
+        <input type="file" id="photoUploadInput" accept="image/*" multiple onchange="handlePhotoUpload(this)">
+      </div>
+      <div class="gallery-admin-grid" id="galleryAdminGrid"></div>
+    </div>
+
+    <!-- TAB: AJUSTES -->
+    <div id="tab-ajustes" class="tab-panel">
+
+      <div class="settings-section">
+        <h3><i class="fas fa-lock"></i> Cambiar contraseña</h3>
+        <div class="settings-row">
+          <label>Contraseña actual</label>
+          <input type="password" id="pwCurrent" class="settings-input" placeholder="Contraseña actual">
+        </div>
+        <div class="settings-row">
+          <label>Nueva contraseña</label>
+          <input type="password" id="pwNew" class="settings-input" placeholder="Nueva contraseña">
+        </div>
+        <div class="settings-row">
+          <label>Confirmar nueva contraseña</label>
+          <input type="password" id="pwConfirm" class="settings-input" placeholder="Repetir contraseña">
+        </div>
+        <button class="btn-save" onclick="changePassword()">Guardar contraseña</button>
+        <span class="save-msg" id="pwSaveMsg">✓ Contraseña actualizada</span>
+      </div>
+
+      <div class="settings-section">
+        <h3><i class="fas fa-calendar-day"></i> Configuración de turnos</h3>
+        <div class="settings-row">
+          <label>Máximo de turnos por día</label>
+          <input type="number" id="maxPerDay" class="settings-input" min="1" max="20" value="4" style="max-width:100px">
+        </div>
+        <button class="btn-save" onclick="saveBookingConfig()">Guardar</button>
+        <span class="save-msg" id="configSaveMsg">✓ Guardado</span>
+      </div>
+
+      <div class="danger-zone">
+        <h3><i class="fas fa-exclamation-triangle"></i> Zona peligrosa</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">
+          Estas acciones no se pueden deshacer.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn-danger" onclick="confirmAction('Eliminar todos los turnos cancelados', deleteCancelled)">
+            Eliminar cancelados
+          </button>
+          <button class="btn-danger" onclick="confirmAction('Eliminar TODOS los turnos (permanente)', deleteAllBookings)">
+            Borrar todos los turnos
+          </button>
+          <button class="btn-danger" onclick="confirmAction('Restaurar galería (quitar imágenes ocultas y extras)', resetGallery)">
+            Restaurar galería
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Confirm modal -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">¿Estás seguro?</h3>
+    <p id="confirmMsg">Esta acción no se puede deshacer.</p>
+    <div class="confirm-btns">
+      <button class="confirm-no" onclick="closeConfirm()">Cancelar</button>
+      <button class="confirm-yes" id="confirmYes">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// DATA
+// =============================================
+
+const DEFAULT_PASSWORD = 'morrey2025';
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MONTH_SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const KNOWN_IMAGES = Array.from({length: 34}, (_, i) => `${i + 1}.jpg`);
+
+function getBookings() {
+  try { return JSON.parse(localStorage.getItem('morrey_bookings') || '[]'); } catch { return []; }
+}
+function saveBookings(b) { localStorage.setItem('morrey_bookings', JSON.stringify(b)); }
+
+function getPassword() {
+  return localStorage.getItem('morrey_admin_pw') || DEFAULT_PASSWORD;
+}
+
+function getHidden() {
+  try { return JSON.parse(localStorage.getItem('morrey_hidden_gallery') || '[]'); } catch { return []; }
+}
+function saveHidden(h) { localStorage.setItem('morrey_hidden_gallery', JSON.stringify(h)); }
+
+function getExtras() {
+  try { return JSON.parse(localStorage.getItem('morrey_extra_gallery') || '[]'); } catch { return []; }
+}
+function saveExtras(e) { localStorage.setItem('morrey_extra_gallery', JSON.stringify(e)); }
+
+// =============================================
+// LOGIN
+// =============================================
+
+function togglePw() {
+  const inp = document.getElementById('loginPw');
+  const icon = document.getElementById('pwEyeIcon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+
+function doLogin() {
+  const pw = document.getElementById('loginPw').value;
+  if (pw === getPassword()) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'flex';
+    initDashboard();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPw').style.borderColor = 'var(--red)';
+    setTimeout(() => {
+      document.getElementById('loginPw').style.borderColor = '';
+    }, 2000);
+  }
+}
+
+document.getElementById('loginPw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPw').value = '';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+// =============================================
+// TABS
+// =============================================
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if (name === 'turnos') renderBookings();
+  if (name === 'calendario') renderAdminCal();
+  if (name === 'galeria') renderGalleryAdmin();
+  if (name === 'ajustes') initAjustes();
+}
+
+// =============================================
+// INIT
+// =============================================
+
+let currentFilter = 'all';
+let acalYear, acalMonth, acalSelectedDate;
+
+function initDashboard() {
+  currentFilter = 'all';
+  const now = new Date();
+  acalYear = now.getFullYear();
+  acalMonth = now.getMonth();
+  acalSelectedDate = null;
+  renderBookings();
+}
+
+// =============================================
+// TURNOS TAB
+// =============================================
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('#filterRow .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBookings();
+}
+
+function renderBookings() {
+  const all = getBookings();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = toDateStr(today);
+
+  // Stats
+  const total = all.length;
+  const pending = all.filter(b => b.status === 'pending').length;
+  const confirmed = all.filter(b => b.status === 'confirmed').length;
+  const todayCount = all.filter(b => b.date === todayStr && b.status !== 'cancelled').length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total turnos</div>
+      <div class="stat-value">${total}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pendientes</div>
+      <div class="stat-value" style="color:var(--orange)">${pending}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Confirmados</div>
+      <div class="stat-value" style="color:var(--green)">${confirmed}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Hoy</div>
+      <div class="stat-value">${todayCount}</div>
+      <div class="stat-sub">${todayStr}</div>
+    </div>
+  `;
+
+  // Filter
+  let filtered = [...all];
+  if (currentFilter === 'pending') filtered = all.filter(b => b.status === 'pending');
+  else if (currentFilter === 'confirmed') filtered = all.filter(b => b.status === 'confirmed');
+  else if (currentFilter === 'cancelled') filtered = all.filter(b => b.status === 'cancelled');
+  else if (currentFilter === 'upcoming') {
+    filtered = all.filter(b => b.date >= todayStr && b.status !== 'cancelled');
+  }
+
+  // Sort by date
+  filtered.sort((a, b) => a.date.localeCompare(b.date));
+
+  const list = document.getElementById('bookingsList');
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-times"></i><p>No hay turnos en esta categoría</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(b => {
+    const [y, m, d] = b.date.split('-').map(Number);
+    const statusLabel = { pending: 'Pendiente', confirmed: 'Confirmado', cancelled: 'Cancelado' }[b.status] || b.status;
+    const statusClass = b.status;
+    return `
+      <div class="booking-card status-${b.status}" id="bcard-${b.id}">
+        <div class="booking-date-box">
+          <div class="bdb-day">${d}</div>
+          <div class="bdb-month">${MONTH_SHORT[m-1]}</div>
+        </div>
+        <div class="booking-info">
+          <span class="bi-service">${escHtml(b.service)}</span>
+          <h4>${escHtml(b.name)}</h4>
+          <div class="bi-contact">
+            <span><i class="fas fa-phone"></i> ${escHtml(b.phone)}</span>
+            <span><i class="fas fa-envelope"></i> ${escHtml(b.email)}</span>
+            <span class="badge-status ${statusClass}">${statusLabel}</span>
+          </div>
+        </div>
+        <div class="booking-actions-col">
+          ${b.status !== 'confirmed' && b.status !== 'cancelled' ? `<button class="ba-btn confirm" onclick="updateStatus('${b.id}','confirmed')"><i class="fas fa-check"></i> Confirmar</button>` : ''}
+          ${b.status !== 'cancelled' ? `<button class="ba-btn cancel" onclick="updateStatus('${b.id}','cancelled')"><i class="fas fa-times"></i> Cancelar</button>` : ''}
+          <button class="ba-btn delete" onclick="deleteBooking('${b.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateStatus(id, status) {
+  const bookings = getBookings();
+  const idx = bookings.findIndex(b => b.id === id);
+  if (idx < 0) return;
+  bookings[idx].status = status;
+  saveBookings(bookings);
+  renderBookings();
+  showToast(status === 'confirmed' ? '✓ Turno confirmado' : 'Turno cancelado', status === 'confirmed' ? 'success' : '');
+}
+
+function deleteBooking(id) {
+  confirmAction('Eliminar este turno', () => {
+    const bookings = getBookings().filter(b => b.id !== id);
+    saveBookings(bookings);
+    renderBookings();
+    showToast('Turno eliminado');
+  });
+}
+
+// =============================================
+// CALENDARIO TAB
+// =============================================
+
+function acalNav(dir) {
+  acalMonth += dir;
+  if (acalMonth < 0) { acalMonth = 11; acalYear--; }
+  if (acalMonth > 11) { acalMonth = 0; acalYear++; }
+  renderAdminCal();
+}
+
+function renderAdminCal() {
+  const title = document.getElementById('acalTitle');
+  const grid = document.getElementById('acalGrid');
+  if (!title || !grid) return;
+
+  title.textContent = `${MONTH_NAMES[acalMonth]} ${acalYear}`;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const bookings = getBookings();
+
+  // Count bookings per date
+  const countMap = {};
+  bookings.forEach(b => {
+    if (b.status !== 'cancelled') {
+      countMap[b.date] = (countMap[b.date] || 0) + 1;
+    }
+  });
+
+  const firstDow = new Date(acalYear, acalMonth, 1).getDay();
+  const daysInMonth = new Date(acalYear, acalMonth + 1, 0).getDate();
+
+  grid.innerHTML = '';
+
+  for (let i = 0; i < firstDow; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'acal-cell empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(acalYear, acalMonth, d);
+    const dateStr = `${acalYear}-${String(acalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const count = countMap[dateStr] || 0;
+    const isPast = date < today;
+
+    const cell = document.createElement('div');
+    cell.className = 'acal-cell';
+    if (date.getTime() === today.getTime()) cell.classList.add('today');
+    if (isPast) cell.classList.add('past');
+    if (acalSelectedDate === dateStr) cell.classList.add('selected');
+
+    cell.innerHTML = `<span>${d}</span>`;
+    if (count > 0) {
+      const badge = document.createElement('span');
+      badge.className = `acal-count c${Math.min(count, 3)}`;
+      badge.textContent = count;
+      cell.appendChild(badge);
+    }
+
+    cell.addEventListener('click', () => {
+      acalSelectedDate = dateStr;
+      renderAdminCal();
+      showDayDetail(dateStr);
+    });
+
+    grid.appendChild(cell);
+  }
+
+  if (acalSelectedDate) showDayDetail(acalSelectedDate);
+}
+
+function showDayDetail(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = new Date(y, m-1, d).getDay();
+  const title = document.getElementById('dayDetailTitle');
+  const list = document.getElementById('dayDetailList');
+
+  title.innerHTML = `${DAY_NAMES[dow]} <span>${d} de ${MONTH_NAMES[m-1].toLowerCase()} ${y}</span>`;
+
+  const dayBookings = getBookings()
+    .filter(b => b.date === dateStr && b.status !== 'cancelled')
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+  if (!dayBookings.length) {
+    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.88rem; text-align:center; padding:20px 0;">Sin turnos este día</p>`;
+    return;
+  }
+
+  list.innerHTML = dayBookings.map(b => `
+    <div class="day-booking-item">
+      <div class="dbi-name">${escHtml(b.name)}</div>
+      <div class="dbi-service">${escHtml(b.service)}</div>
+      <div class="dbi-contact">
+        <span><i class="fas fa-phone"></i> ${escHtml(b.phone)}</span>
+        <span class="badge-status ${b.status}" style="font-size:0.72rem">${b.status === 'pending' ? 'Pendiente' : 'Confirmado'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =============================================
+// GALERÍA TAB
+// =============================================
+
+function renderGalleryAdmin() {
+  const hidden = getHidden();
+  const extras = getExtras();
+  const total = KNOWN_IMAGES.length + extras.length;
+  const hiddenCount = hidden.length;
+
+  document.getElementById('galleryStats').textContent =
+    `${total} fotos en total · ${hiddenCount} ocultas · ${extras.length} subidas`;
+
+  const grid = document.getElementById('galleryAdminGrid');
+  grid.innerHTML = '';
+
+  // Known images
+  KNOWN_IMAGES.forEach(src => {
+    const isHidden = hidden.includes(src);
+    const item = document.createElement('div');
+    item.className = 'ga-item' + (isHidden ? ' hidden-img' : '');
+    item.innerHTML = `
+      <img src="${src}" alt="${src}" loading="lazy">
+      <span class="ga-hidden-badge">Oculta</span>
+      <div class="ga-item-overlay">
+        <button class="ga-btn" onclick="toggleHide('${src}')" title="${isHidden ? 'Mostrar' : 'Ocultar'}">
+          <i class="fas ${isHidden ? 'fa-eye' : 'fa-eye-slash'}"></i>
+        </button>
+      </div>
+    `;
+    grid.appendChild(item);
+  });
+
+  // Extra images
+  extras.forEach(extra => {
+    const item = document.createElement('div');
+    item.className = 'ga-item';
+    item.innerHTML = `
+      <img src="${extra.src}" alt="${extra.name || 'Extra'}" loading="lazy">
+      <span class="ga-extra-badge">Nueva</span>
+      <div class="ga-item-overlay">
+        <button class="ga-btn del" onclick="deleteExtra('${extra.id}')" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `;
+    grid.appendChild(item);
+  });
+}
+
+function toggleHide(src) {
+  const hidden = getHidden();
+  const idx = hidden.indexOf(src);
+  if (idx >= 0) hidden.splice(idx, 1);
+  else hidden.push(src);
+  saveHidden(hidden);
+  renderGalleryAdmin();
+  showToast(idx >= 0 ? 'Foto visible en el sitio' : 'Foto oculta del sitio', idx >= 0 ? 'success' : '');
+}
+
+function deleteExtra(id) {
+  confirmAction('Eliminar esta foto subida', () => {
+    const extras = getExtras().filter(e => e.id !== id);
+    saveExtras(extras);
+    renderGalleryAdmin();
+    showToast('Foto eliminada');
+  });
+}
+
+function handlePhotoUpload(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  let processed = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const extras = getExtras();
+      extras.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+        src: e.target.result,
+        name: file.name,
+        addedAt: new Date().toISOString()
+      });
+      saveExtras(extras);
+      processed++;
+      if (processed === files.length) {
+        renderGalleryAdmin();
+        showToast(`✓ ${files.length} foto${files.length > 1 ? 's' : ''} subida${files.length > 1 ? 's' : ''}`, 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+// =============================================
+// AJUSTES TAB
+// =============================================
+
+function initAjustes() {
+  document.getElementById('maxPerDay').value = localStorage.getItem('morrey_max_per_day') || '4';
+}
+
+function changePassword() {
+  const current = document.getElementById('pwCurrent').value;
+  const newPw = document.getElementById('pwNew').value;
+  const confirm = document.getElementById('pwConfirm').value;
+
+  if (current !== getPassword()) {
+    showToast('Contraseña actual incorrecta', 'error'); return;
+  }
+  if (!newPw || newPw.length < 4) {
+    showToast('La nueva contraseña debe tener al menos 4 caracteres', 'error'); return;
+  }
+  if (newPw !== confirm) {
+    showToast('Las contraseñas no coinciden', 'error'); return;
+  }
+
+  localStorage.setItem('morrey_admin_pw', newPw);
+  document.getElementById('pwCurrent').value = '';
+  document.getElementById('pwNew').value = '';
+  document.getElementById('pwConfirm').value = '';
+
+  const msg = document.getElementById('pwSaveMsg');
+  msg.style.display = 'inline';
+  setTimeout(() => msg.style.display = 'none', 3000);
+  showToast('✓ Contraseña actualizada', 'success');
+}
+
+function saveBookingConfig() {
+  const max = parseInt(document.getElementById('maxPerDay').value, 10);
+  if (isNaN(max) || max < 1) { showToast('Valor inválido', 'error'); return; }
+  localStorage.setItem('morrey_max_per_day', max);
+  const msg = document.getElementById('configSaveMsg');
+  msg.style.display = 'inline';
+  setTimeout(() => msg.style.display = 'none', 3000);
+  showToast('✓ Configuración guardada', 'success');
+}
+
+function deleteCancelled() {
+  const bookings = getBookings().filter(b => b.status !== 'cancelled');
+  saveBookings(bookings);
+  renderBookings();
+  showToast('Turnos cancelados eliminados', 'success');
+}
+
+function deleteAllBookings() {
+  saveBookings([]);
+  renderBookings();
+  showToast('Todos los turnos eliminados');
+}
+
+function resetGallery() {
+  saveHidden([]);
+  saveExtras([]);
+  renderGalleryAdmin();
+  showToast('Galería restaurada', 'success');
+}
+
+// =============================================
+// CONFIRM MODAL
+// =============================================
+
+let pendingAction = null;
+
+function confirmAction(msg, fn) {
+  pendingAction = fn;
+  document.getElementById('confirmMsg').textContent = msg + '. ¿Estás seguro?';
+  document.getElementById('confirmOverlay').classList.add('active');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('active');
+  pendingAction = null;
+}
+
+document.getElementById('confirmYes').addEventListener('click', () => {
+  if (typeof pendingAction === 'function') pendingAction();
+  closeConfirm();
+});
+
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmOverlay')) closeConfirm();
+});
+
+// =============================================
+// TOAST
+// =============================================
+
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// =============================================
+// HELPERS
+// =============================================
+
+function toDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -1276,3 +1276,383 @@ html {
 html {
     -webkit-text-size-adjust: 100%;
 }
+
+/* =============================================
+   CONTACTO - CTA DE TURNO
+   ============================================= */
+.contact-booking-cta {
+    text-align: center;
+    margin-top: 36px;
+    padding: 32px 24px;
+    background: rgba(255,222,0,0.04);
+    border: 1px solid rgba(255,222,0,0.15);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 480px;
+}
+
+.contact-booking-cta p {
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 18px;
+    font-size: 1.05rem;
+}
+
+.contact-booking-cta .btn-cta {
+    font-size: 1.05rem;
+    padding: 14px 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Footer admin link */
+.footer-admin-link {
+    margin-top: 8px;
+}
+.footer-admin-link a {
+    color: rgba(255,255,255,0.2);
+    text-decoration: none;
+    font-size: 0.78rem;
+    transition: color 0.2s;
+}
+.footer-admin-link a:hover { color: rgba(255,255,255,0.5); }
+
+/* =============================================
+   BOOKING MODAL
+   ============================================= */
+
+.bm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    padding: 16px;
+}
+
+.bm-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.bm-box {
+    background: #111;
+    border: 1px solid rgba(255,222,0,0.18);
+    border-radius: 18px;
+    padding: 32px 28px 28px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 92vh;
+    overflow-y: auto;
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,222,0,0.25) transparent;
+}
+
+.bm-box::-webkit-scrollbar { width: 5px; }
+.bm-box::-webkit-scrollbar-thumb { background: rgba(255,222,0,0.25); border-radius: 10px; }
+
+.bm-close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 1.9rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s;
+    z-index: 2;
+}
+.bm-close:hover { color: #fff; }
+
+/* Step dots */
+.bm-steps-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.bs-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 2px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+.bs-dot.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #000;
+}
+.bs-dot.done {
+    background: rgba(255,222,0,0.15);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.bs-line {
+    flex: 1;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+    max-width: 64px;
+}
+
+.bm-title {
+    font-size: 1.25rem;
+    color: #fff;
+    margin-bottom: 22px;
+    text-align: center;
+}
+
+/* Form groups */
+.bm-group {
+    margin-bottom: 16px;
+}
+.bm-group label {
+    display: block;
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 7px;
+}
+.bm-group select,
+.bm-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #2a2a2a;
+    border-radius: 9px;
+    background: #0d0d0d;
+    color: #fff;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+.bm-group select:focus,
+.bm-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255,222,0,0.1);
+}
+.bm-group select option { background: #111; }
+.bm-group input.error { border-color: #ff4d4d; }
+
+/* Calendar widget */
+.bm-calendar {
+    background: #0a0a0a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 13px;
+    padding: 16px;
+    margin: 18px 0;
+}
+
+.bcal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.bcal-header span {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #fff;
+    text-transform: capitalize;
+    letter-spacing: 0.02em;
+}
+.bcal-nav {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+}
+.bcal-nav:hover { background: rgba(255,222,0,0.12); border-color: var(--primary-color); }
+
+.bcal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 6px;
+}
+.bcal-weekdays span {
+    text-align: center;
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.35);
+    padding: 3px 0;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bcal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.bcal-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    border: 1px solid transparent;
+    color: #fff;
+    line-height: 1;
+}
+.bcal-cell:hover:not(.disabled):not(.selected):not(.empty) {
+    background: rgba(255,222,0,0.1);
+    border-color: rgba(255,222,0,0.3);
+}
+.bcal-cell.today { border-color: rgba(255,222,0,0.45); }
+.bcal-cell.selected {
+    background: var(--primary-color);
+    color: #000;
+    font-weight: 700;
+    border-color: var(--primary-color);
+}
+.bcal-cell.disabled {
+    color: rgba(255,255,255,0.15);
+    cursor: not-allowed;
+}
+.bcal-cell.empty { cursor: default; }
+
+.bcal-dot {
+    position: absolute;
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+    background: var(--primary-color);
+    border-radius: 50%;
+}
+.bcal-cell.selected .bcal-dot { background: #000; }
+
+.bm-date-text {
+    text-align: center;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.93rem;
+    margin-bottom: 18px;
+    min-height: 20px;
+}
+.bm-date-text strong { color: var(--primary-color); }
+
+.bm-full-btn {
+    width: 100%;
+    padding: 13px;
+    font-size: 1rem;
+    justify-content: center;
+}
+.bm-full-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.bm-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+}
+.bm-actions .btn {
+    flex: 1;
+    padding: 13px;
+    text-align: center;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+}
+
+/* Success step */
+.bm-success {
+    text-align: center;
+    padding: 8px 0 4px;
+}
+.bm-success-icon {
+    font-size: 3.6rem;
+    color: var(--primary-color);
+    margin-bottom: 14px;
+}
+.bm-success h3 {
+    font-size: 1.6rem;
+    color: #fff;
+    margin-bottom: 20px;
+}
+.bm-summary {
+    background: #0a0a0a;
+    border: 1px solid rgba(255,222,0,0.15);
+    border-radius: 11px;
+    padding: 16px 18px;
+    text-align: left;
+    margin-bottom: 20px;
+}
+.bm-summary p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.92rem;
+    gap: 10px;
+}
+.bm-summary p:last-child { margin-bottom: 0; }
+.bm-summary p span { color: rgba(255,255,255,0.5); flex-shrink: 0; }
+.bm-summary p strong { color: #fff; text-align: right; }
+
+.bm-wa-note {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.88rem;
+    margin-bottom: 12px;
+}
+.bm-close-success {
+    margin-top: 10px;
+    display: block;
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6);
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+.bm-close-success:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+/* Responsive booking modal */
+@media (max-width: 500px) {
+    .bm-box {
+        padding: 24px 18px 20px;
+        max-height: 95vh;
+        border-radius: 14px;
+    }
+    .bcal-cell { font-size: 0.8rem; }
+    .bm-title { font-size: 1.1rem; }
+}
