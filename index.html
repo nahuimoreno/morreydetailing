@@ -1,294 +1,806 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Morrey Detailing - Taller de Autos</title>
-    <meta name="description" content="Morrey Detailing - Especialistas en detailing automotriz. Lavados, tapizados, cerámicos, acrílicos y restauración de ópticas. Agendá tu turno online.">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" href="logo.jpg" type="image/jpeg">
-    <link rel="apple-touch-icon" href="logo.jpg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morrey Detailing - Detailing Premium Automotriz</title>
+  <meta name="description" content="Morrey Detailing - Especialistas en detailing automotriz premium en Buenos Aires. Lavados, tapizados, cerámicos, acrílicos y restauración de ópticas. Agendá tu turno.">
+  <link rel="icon" href="logo.jpg" type="image/jpeg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#ffde00', dark: '#e6c800' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: #080808;
+      color: #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      margin: 0;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,222,0,0.35); border-radius: 10px; }
+
+    .text-gradient {
+      background: linear-gradient(135deg, #ffde00 0%, #fffbb0 50%, #ffde00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Hero animations */
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+    @keyframes waRipple {
+      0%   { box-shadow: 0 0 0 0   rgba(37,211,102,.35); }
+      70%  { box-shadow: 0 0 0 16px rgba(37,211,102,0);  }
+      100% { box-shadow: 0 0 0 0   rgba(37,211,102,0);   }
+    }
+    @keyframes menuSlide { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+    .h-anim-1 { animation: fadeUp  .75s ease both; }
+    .h-anim-2 { animation: fadeUp  .75s .14s ease both; }
+    .h-anim-3 { animation: fadeUp  .75s .28s ease both; }
+    .h-anim-4 { animation: fadeUp  .75s .42s ease both; }
+    .wa-ripple { animation: waRipple 2.2s ease infinite; }
+    .menu-anim { animation: menuSlide .2s ease both; }
+
+    /* Scroll reveal */
+    .rv { opacity:0; transform:translateY(20px); transition: opacity .65s ease, transform .65s ease; }
+    .rv.on { opacity:1; transform:none; }
+
+    /* Date/select dark */
+    input[type="date"] { color-scheme: dark; }
+    select option { background:#0d0d0d; color:#fff; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.6); cursor:pointer; }
+  </style>
 </head>
-<body class="theme-black">
-    <!-- Header y Navegación -->
-    <header>
-        <div class="container">
-            <div class="logo">
-                <a href="#inicio">
-                    <img src="logo2.5.jpg" alt="Morrey Detailing Logo">
-                </a>
-            </div>
-            <nav>
-                <ul>
-                    <li><a href="#inicio">Inicio</a></li>
-                    <li><a href="#servicios">Servicios</a></li>
-                    <li><a href="#galeria">Galería</a></li>
-                    <li><a href="#acerca">Nosotros</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
-                </ul>
-            </nav>
-            <div class="menu-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </header>
+<body>
+  <div id="root"></div>
 
-    <!-- Sección Hero -->
-    <section id="inicio" class="hero" data-reveal data-effect="fade-up">
-        <video id="heroVideo" class="hero-video" autoplay muted loop playsinline preload="auto">
-            <source src="video1.mp4" type="video/mp4">
-            <source src="video2.mp4" type="video/mp4">
-        </video>
-        <div class="hero-overlay"></div>
-        <div class="container">
-            <div class="hero-content">
-                <h2>Expertos en Detailing Automotriz</h2>
-                <p>Cuidamos tu vehículo como si fuera nuestro</p>
-                <button id="openBookingBtn" class="btn btn-cta">Agendar Turno</button>
-            </div>
-        </div>
-    </section>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-    <!-- Sección de Servicios -->
-    <section id="servicios" class="services">
-        <div class="container">
-            <h2 class="section-title" data-reveal data-effect="fade-up">Nuestros Servicios</h2>
-            <div class="services-grid" data-reveal data-effect="fade-up">
-                <div class="service-card" data-reveal data-effect="zoom-in" data-delay="0s">
-                    <i class="fas fa-car"></i>
-                    <h3>Lavados detallados</h3>
-                    <p>Limpieza exterior e interior con enfoque en cada detalle.</p>
-                </div>
-                <div class="service-card" data-reveal data-effect="zoom-in" data-delay="0.06s">
-                    <i class="fas fa-tools"></i>
-                    <h3>Limpieza de tapizados/ motor</h3>
-                    <p>Desinfección y limpieza profunda de tapizados y compartimiento del motor.</p>
-                </div>
-                <div class="service-card" data-reveal data-effect="zoom-in" data-delay="0.12s">
-                    <i class="fas fa-spray-can"></i>
-                    <h3>Abrillantados/ Acrílicos/ Cerámicos</h3>
-                    <p>Protecciones avanzadas para realzar y cuidar la pintura de tu auto.</p>
-                </div>
-                <div class="service-card" data-reveal data-effect="zoom-in" data-delay="0.18s">
-                    <i class="fas fa-lightbulb"></i>
-                    <h3>Restauración de ópticas</h3>
-                    <p>Pulido y recuperación de faros para mejorar visibilidad y estética.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    /* =============================================
+       CONSTANTS
+    ============================================= */
 
-    <!-- Sección Acerca de -->
-    <section id="acerca" class="about">
-        <div class="container">
-            <div class="about-content">
-                <div class="about-text" data-reveal data-effect="slide-left">
-                    <h2 class="section-title">Sobre Nosotros</h2>
-                    <p>Somos un equipo de especialistas en detailing automotriz con más de 10 años de experiencia en el cuidado de vehículos.</p>
-                    <p>En Morrey Detailing nos comprometemos a brindar el mejor servicio para que tu auto luzca como nuevo.</p>
-                </div>
-                <div class="about-image" data-reveal data-effect="slide-right">
-                    <img src="taller.jpg" alt="Nuestro taller">
-                </div>
-            </div>
-        </div>
-    </section>
+    const PHONE   = '5491156359321';
+    const WA_BASE = `https://wa.me/${PHONE}`;
 
-    <!-- Sección Galería -->
-    <section id="galeria" class="gallery">
-        <div class="container">
-            <h2 class="section-title" data-reveal data-effect="fade-up">Galería de Trabajos</h2>
-            <div class="gallery-grid" data-reveal data-effect="fade-up">
-                <div class="gallery-item"><img src="1.jpg" alt="Trabajo 1"></div>
-                <div class="gallery-item"><img src="2.jpg" alt="Trabajo 2"></div>
-                <div class="gallery-item"><img src="3.jpg" alt="Trabajo 3"></div>
-                <div class="gallery-item"><img src="4.jpg" alt="Trabajo 4"></div>
-                <div class="gallery-item"><img src="5.jpg" alt="Trabajo 5"></div>
-                <div class="gallery-item"><img src="6.jpg" alt="Trabajo 6"></div>
-                <div class="gallery-item"><img src="7.jpg" alt="Trabajo 7"></div>
-                <div class="gallery-item"><img src="8.jpg" alt="Trabajo 8"></div>
-                <div class="gallery-item"><img src="9.jpg" alt="Trabajo 9"></div>
-                <div class="gallery-item"><img src="10.jpg" alt="Trabajo 10"></div>
-                <div class="gallery-item"><img src="11.jpg" alt="Trabajo 11"></div>
-                <div class="gallery-item"><img src="12.jpg" alt="Trabajo 12"></div>
-                <div class="gallery-item"><img src="13.jpg" alt="Trabajo 13"></div>
-                <div class="gallery-item"><img src="14.jpg" alt="Trabajo 14"></div>
-                <div class="gallery-item"><img src="15.jpg" alt="Trabajo 15"></div>
-                <div class="gallery-item"><img src="16.jpg" alt="Trabajo 16"></div>
-                <div class="gallery-item"><img src="17.jpg" alt="Trabajo 17"></div>
-                <div class="gallery-item"><img src="18.jpg" alt="Trabajo 18"></div>
-                <div class="gallery-item"><img src="19.jpg" alt="Trabajo 19"></div>
-                <div class="gallery-item"><img src="20.jpg" alt="Trabajo 20"></div>
-                <div class="gallery-item"><img src="21.jpg" alt="Trabajo 21"></div>
-                <div class="gallery-item"><img src="22.jpg" alt="Trabajo 22"></div>
-                <div class="gallery-item"><img src="23.jpg" alt="Trabajo 23"></div>
-                <div class="gallery-item"><img src="24.jpg" alt="Trabajo 24"></div>
-                <div class="gallery-item"><img src="25.jpg" alt="Trabajo 25"></div>
-                <div class="gallery-item"><img src="26.jpg" alt="Trabajo 26"></div>
-                <div class="gallery-item"><img src="27.jpg" alt="Trabajo 27"></div>
-                <div class="gallery-item"><img src="28.jpg" alt="Trabajo 28"></div>
-                <div class="gallery-item"><img src="29.jpg" alt="Trabajo 29"></div>
-                <div class="gallery-item"><img src="30.jpg" alt="Trabajo 30"></div>
-                <div class="gallery-item"><img src="31.jpg" alt="Trabajo 31"></div>
-                <div class="gallery-item"><img src="32.jpg" alt="Trabajo 32"></div>
-                <div class="gallery-item"><img src="33.jpg" alt="Trabajo 33"></div>
-                <div class="gallery-item"><img src="34.jpg" alt="Trabajo 34"></div>
-            </div>
-        </div>
-    </section>
+    const SERVICES = [
+      { icon:'fa-car-side',      name:'Lavado Detallado Premium',   desc:'Limpieza integral exterior e interior con atención a cada milímetro. Técnicas y productos de nivel profesional para un resultado impecable.' },
+      { icon:'fa-couch',         name:'Limpieza de Tapizados',      desc:'Extracción profunda de suciedad, manchas y bacterias en telas, cueros y alcántara. Interior renovado y desinfectado desde el primer tratamiento.' },
+      { icon:'fa-cog',           name:'Limpieza de Motor',          desc:'Desengrasado, higienización y presentación del compartimiento del motor con productos especializados y técnicas seguras para todos los componentes.' },
+      { icon:'fa-sun',           name:'Abrillantado',               desc:'Pulido profesional para eliminar marcas, oxidación superficial y opacidad. La pintura recupera su profundidad y brillo original.' },
+      { icon:'fa-shield-alt',    name:'Tratamiento Acrílico',       desc:'Capa protectora de larga duración que potencia el brillo, facilita la limpieza y protege la pintura de los agentes externos.' },
+      { icon:'fa-gem',           name:'Tratamiento Cerámico',       desc:'La máxima protección disponible. Recubrimiento nanoCerámico hidrofóbico que preserva, protege y realza la pintura por años.' },
+      { icon:'fa-lightbulb',     name:'Restauración de Ópticas',    desc:'Recuperación y pulido de faros opacos, amarillados o rayados. Visibilidad mejorada y estética renovada sin necesidad de reemplazo.' },
+    ];
 
-    <!-- Lightbox para galería -->
-    <div id="lightbox" class="lightbox" aria-hidden="true">
-        <button class="lightbox-close" aria-label="Cerrar">&times;</button>
-        <img class="lightbox-image" alt="Imagen ampliada" />
-        <button class="lightbox-prev" aria-label="Anterior">&#10094;</button>
-        <button class="lightbox-next" aria-label="Siguiente">&#10095;</button>
-    </div>
+    const GALLERY = Array.from({ length: 34 }, (_, i) => `${i + 1}.jpg`);
 
-    <!-- Sección de Contacto -->
-    <section id="contacto" class="contact">
-        <div class="container">
-            <h2 class="section-title" data-reveal data-effect="fade-up">Contacto</h2>
-            <div class="contact-container">
-                <div class="contact-info" data-reveal data-effect="slide-left">
-                    <div class="info-item">
-                        <i class="fas fa-phone"></i>
-                        <p><a href="tel:+541156359321">11 5635-9321</a></p>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-clock"></i>
-                        <p>Lunes a Viernes: 9:00 - 18:00<br>Sábados: 9:00 - 13:00</p>
-                    </div>
-                    <div class="info-item">
-                        <i class="fab fa-instagram"></i>
-                        <p><a href="https://www.instagram.com/morrey.detail/" target="_blank" rel="noopener noreferrer">@morrey.detail</a></p>
-                    </div>
-                </div>
-                <div class="contact-booking-cta" data-reveal data-effect="fade-up">
-                    <p>¿Listo para darle el mejor cuidado a tu auto?</p>
-                    <button id="openBookingBtn2" class="btn btn-cta" onclick="openBookingModal()">
-                        <i class="fas fa-calendar-check"></i> Agendar Turno Online
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
+    const TESTIMONIALS = [
+      { name:'Martín G.',    vehicle:'Toyota Corolla', stars:5, text:'Llevé el auto bastante deteriorado y quedó impecable. El cerámico que le aplicaron es increíble, el agua se va sola. Profesionalismo total.' },
+      { name:'Valentina R.', vehicle:'VW Vento',       stars:5, text:'La limpieza de tapizados dejó el interior como nuevo. Manchas que parecían imposibles de sacar desaparecieron. Muy recomendable.' },
+      { name:'Lucas P.',     vehicle:'Ford Mustang',   stars:5, text:'El resultado del abrillantado superó todas mis expectativas. Se nota que cuidan cada detalle y que aman lo que hacen. Vuelvo sin dudas.' },
+    ];
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">
-                    <img src="logo2.5.jpg" alt="Morrey Detailing Logo" class="footer-img">
-                    <p>Expertos en detailing automotriz</p>
-                </div>
-                <div class="footer-nav">
-                    <a href="#inicio">Inicio</a>
-                    <a href="#servicios">Servicios</a>
-                    <a href="#galeria">Galería</a>
-                    <a href="#acerca">Nosotros</a>
-                    <a href="#contacto">Contacto</a>
-                </div>
-                <div class="footer-social">
-                    <h4>Seguinos</h4>
-                    <div class="social-icons">
-                        <a href="https://www.instagram.com/morrey.detail/" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2025 Morrey Detailing. Todos los derechos reservados.</p>
-                <p class="footer-admin-link"><a href="admin.html">Admin</a></p>
-            </div>
-        </div>
-    </footer>
+    const WHY_US = [
+      { icon:'fa-user-check',        title:'Atención personalizada',     desc:'Analizamos cada vehículo individualmente para definir el tratamiento ideal.' },
+      { icon:'fa-flask',             title:'Productos profesionales',    desc:'Trabajamos exclusivamente con marcas premium reconocidas en la industria.' },
+      { icon:'fa-eye',               title:'Resultados visibles',        desc:'La diferencia es inmediata y notable. Cada trabajo apunta a un resultado excepcional.' },
+      { icon:'fa-award',             title:'Técnicos especializados',    desc:'Equipo con años de experiencia en detailing automotriz de alta gama.' },
+      { icon:'fa-hand-holding-heart',title:'Cuidado total del vehículo', desc:'Tratamos tu auto con el mismo respeto y cuidado que si fuera el nuestro.' },
+    ];
 
-    <!-- Botón de WhatsApp flotante -->
-    <a href="https://wa.me/5491156359321?text=Hola%20Morrey%20Detailing!%20Me%20gustar%C3%ADa%20pedir%20turno%20desde%20la%20web." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-        <i class="fab fa-whatsapp"></i>
-    </a>
+    const TIMES = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'];
 
-    <!-- Modal de Turnos -->
-    <div id="bookingModal" class="bm-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Agendar turno">
-      <div class="bm-box">
-        <button class="bm-close" id="bmClose" aria-label="Cerrar">&times;</button>
+    const NAV_LINKS = [
+      { label:'Inicio',    id:'inicio'    },
+      { label:'Servicios', id:'servicios' },
+      { label:'Galería',   id:'galeria'   },
+      { label:'Nosotros',  id:'nosotros'  },
+      { label:'Turnos',    id:'turnos'    },
+    ];
 
-        <div class="bm-steps-indicator">
-          <span class="bs-dot active" id="bsDot1">1</span>
-          <span class="bs-line"></span>
-          <span class="bs-dot" id="bsDot2">2</span>
-          <span class="bs-line"></span>
-          <span class="bs-dot" id="bsDot3">3</span>
-        </div>
+    /* =============================================
+       HOOKS
+    ============================================= */
 
-        <!-- Paso 1: Servicio + Fecha -->
-        <div id="bookStep1" class="bm-step">
-          <h3 class="bm-title">Elegí el servicio y la fecha</h3>
+    function useScrolled(threshold = 40) {
+      const [v, setV] = useState(false);
+      useEffect(() => {
+        const fn = () => setV(window.scrollY > threshold);
+        window.addEventListener('scroll', fn, { passive: true });
+        return () => window.removeEventListener('scroll', fn);
+      }, [threshold]);
+      return v;
+    }
 
-          <div class="bm-group">
-            <label for="bookService">Tipo de servicio</label>
-            <select id="bookService">
-              <option value="">-- Seleccionar servicio --</option>
-              <option value="Lavado detallado">Lavado detallado</option>
-              <option value="Limpieza de tapizados / motor">Limpieza de tapizados / motor</option>
-              <option value="Abrillantado / Acrílico / Cerámico">Abrillantado / Acrílico / Cerámico</option>
-              <option value="Restauración de ópticas">Restauración de ópticas</option>
-            </select>
-          </div>
+    function useReveal(delay = 0) {
+      const ref = useRef(null);
+      useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        if (delay) el.style.transitionDelay = `${delay}ms`;
+        const obs = new IntersectionObserver(([e]) => {
+          if (e.isIntersecting) { el.classList.add('on'); obs.unobserve(el); }
+        }, { threshold: 0.1 });
+        obs.observe(el);
+        return () => obs.disconnect();
+      }, [delay]);
+      return ref;
+    }
 
-          <div class="bm-calendar">
-            <div class="bcal-header">
-              <button class="bcal-nav" id="bCalPrev" aria-label="Mes anterior">&#8249;</button>
-              <span id="bCalTitle"></span>
-              <button class="bcal-nav" id="bCalNext" aria-label="Mes siguiente">&#8250;</button>
-            </div>
-            <div class="bcal-weekdays">
-              <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
-            </div>
-            <div class="bcal-grid" id="bCalGrid"></div>
-          </div>
+    /* =============================================
+       UTILS
+    ============================================= */
 
-          <p class="bm-date-text" id="bookSelectedDateText">Seleccioná una fecha disponible</p>
-          <button class="btn btn-cta bm-full-btn" id="bookStep1Next" disabled>Siguiente →</button>
-        </div>
+    const goTo = id => document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
 
-        <!-- Paso 2: Datos personales -->
-        <div id="bookStep2" class="bm-step" style="display:none">
-          <h3 class="bm-title">Tus datos de contacto</h3>
-
-          <div class="bm-group">
-            <label for="bookName">Nombre completo *</label>
-            <input type="text" id="bookName" placeholder="Tu nombre y apellido" autocomplete="name">
-          </div>
-          <div class="bm-group">
-            <label for="bookEmail">Email *</label>
-            <input type="email" id="bookEmail" placeholder="tu@email.com" autocomplete="email">
-          </div>
-          <div class="bm-group">
-            <label for="bookPhone">Celular *</label>
-            <input type="tel" id="bookPhone" placeholder="11 1234-5678" autocomplete="tel">
-          </div>
-
-          <div class="bm-actions">
-            <button class="btn btn-primary" id="bookStep2Back">← Volver</button>
-            <button class="btn btn-cta" id="bookStep2Submit">Confirmar Turno</button>
-          </div>
-        </div>
-
-        <!-- Paso 3: Confirmación -->
-        <div id="bookStep3" class="bm-step bm-success" style="display:none">
-          <div class="bm-success-icon"><i class="fas fa-check-circle"></i></div>
-          <h3>¡Turno agendado!</h3>
-          <div class="bm-summary" id="bSummary"></div>
-          <p class="bm-wa-note">¿Querés avisarnos también por WhatsApp?</p>
-          <button class="btn btn-whatsapp" id="bWABtn"><i class="fab fa-whatsapp"></i> Avisar por WhatsApp</button>
-          <button class="btn btn-primary bm-close-success" id="bCloseBtn">Cerrar</button>
-        </div>
+    const Stars = ({ n }) => (
+      <div className="flex gap-0.5">
+        {Array.from({ length: n }).map((_, i) => <span key={i} className="text-brand text-sm">★</span>)}
       </div>
-    </div>
+    );
 
-    <script src="script.js"></script>
-    <script src="booking.js"></script>
+    /* =============================================
+       NAVBAR
+    ============================================= */
+
+    function Navbar() {
+      const scrolled = useScrolled();
+      const [open, setOpen] = useState(false);
+
+      return (
+        <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0d0d0d]/96 backdrop-blur-xl border-b border-white/[.06] shadow-2xl shadow-black/50' : 'bg-transparent'}`}>
+          <div className="max-w-6xl mx-auto px-5 md:px-8 flex items-center justify-between h-16">
+
+            <button onClick={() => goTo('inicio')} className="flex-shrink-0">
+              <img src="logo2.5.jpg" alt="Morrey Detailing" className="h-10 w-auto object-contain" />
+            </button>
+
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center gap-7">
+              {NAV_LINKS.map(l => (
+                <button key={l.id} onClick={() => goTo(l.id)}
+                  className="text-sm font-medium text-white/55 hover:text-white transition-colors duration-200">
+                  {l.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="hidden md:flex items-center gap-3">
+              <a href={WA_BASE} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors">
+                <i className="fab fa-whatsapp text-[#25D366] text-base"></i>
+                11 5635-9321
+              </a>
+              <button onClick={() => goTo('turnos')}
+                className="px-5 py-2 bg-brand text-black text-sm font-bold rounded-full hover:bg-brand-dark transition-all hover:-translate-y-px active:translate-y-0">
+                Reservar turno
+              </button>
+            </div>
+
+            {/* Mobile toggle */}
+            <button onClick={() => setOpen(!open)}
+              className="md:hidden w-10 h-10 flex items-center justify-center text-white/75 hover:text-white transition-colors">
+              <i className={`fas ${open ? 'fa-times' : 'fa-bars'} text-lg`}></i>
+            </button>
+          </div>
+
+          {/* Mobile menu */}
+          {open && (
+            <div className="md:hidden menu-anim bg-[#0d0d0d] border-t border-white/[.06] px-5 py-4 flex flex-col gap-0.5">
+              {NAV_LINKS.map(l => (
+                <button key={l.id} onClick={() => { goTo(l.id); setOpen(false); }}
+                  className="text-left py-3 text-base font-medium text-white/65 hover:text-white border-b border-white/[.04] last:border-0 transition-colors">
+                  {l.label}
+                </button>
+              ))}
+              <button onClick={() => { goTo('turnos'); setOpen(false); }}
+                className="mt-3 py-3.5 bg-brand text-black font-bold rounded-xl text-base">
+                Reservar turno
+              </button>
+            </div>
+          )}
+        </header>
+      );
+    }
+
+    /* =============================================
+       HERO
+    ============================================= */
+
+    function Hero() {
+      const vidRef = useRef(null);
+
+      useEffect(() => {
+        const v = vidRef.current;
+        if (!v) return;
+        v.muted = true;
+        v.playsInline = true;
+        const tryPlay = () => v.play().catch(() => {});
+        v.addEventListener('canplay', tryPlay, { once: true });
+        setTimeout(tryPlay, 800);
+      }, []);
+
+      return (
+        <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+          <video ref={vidRef} muted loop playsInline preload="auto"
+            className="absolute inset-0 w-full h-full object-cover opacity-35 z-0 pointer-events-none">
+            <source src="video1.mp4" type="video/mp4" />
+          </video>
+
+          {/* Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-[#080808] z-10 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/25 z-10 pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative z-20 text-center max-w-4xl mx-auto px-5 pt-20 pb-12">
+
+            <div className="h-anim-1">
+              <span className="inline-flex items-center gap-2 text-brand text-[11px] font-semibold tracking-widest uppercase mb-8 border border-brand/25 bg-brand/[.06] px-4 py-2 rounded-full backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block animate-pulse"></span>
+                Detailing Automotriz Premium
+              </span>
+            </div>
+
+            <h1 className="h-anim-2 text-5xl md:text-6xl lg:text-7xl font-black leading-[1.06] mb-6">
+              Llevamos tu vehículo<br />
+              <span className="text-gradient">a su mejor versión</span>
+            </h1>
+
+            <p className="h-anim-3 text-white/60 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+              Detailing premium, restauración estética y protección profesional
+              para autos que merecen un cuidado superior.
+            </p>
+
+            <div className="h-anim-3 flex flex-col sm:flex-row gap-3 justify-center mb-14">
+              <button onClick={() => goTo('turnos')}
+                className="px-9 py-4 bg-brand text-black font-bold text-base rounded-2xl hover:bg-brand-dark transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand/25 active:translate-y-0">
+                <i className="fas fa-calendar-check mr-2"></i>Reservar turno
+              </button>
+              <button onClick={() => goTo('servicios')}
+                className="px-9 py-4 bg-white/[.08] backdrop-blur text-white font-semibold text-base rounded-2xl border border-white/[.12] hover:bg-white/[.13] transition-all hover:-translate-y-1 active:translate-y-0">
+                <i className="fas fa-list mr-2 opacity-70"></i>Ver servicios
+              </button>
+            </div>
+
+            {/* Indicators */}
+            <div className="h-anim-4 grid grid-cols-2 md:grid-cols-4 gap-2 max-w-xl mx-auto">
+              {['Atención personalizada','Terminaciones premium','Protección profesional','Trabajo real y detallado'].map((t, i) => (
+                <div key={i} className="flex items-center gap-2 bg-white/[.04] backdrop-blur border border-white/[.08] rounded-xl px-3 py-2.5 text-left">
+                  <span className="text-brand text-[9px] flex-shrink-0">✦</span>
+                  <span className="text-white/70 text-[11px] font-medium leading-tight">{t}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Scroll hint */}
+          <div className="absolute bottom-7 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 text-white/20 animate-bounce">
+            <span className="text-[9px] font-semibold tracking-widest uppercase">Scroll</span>
+            <i className="fas fa-chevron-down text-[10px]"></i>
+          </div>
+        </section>
+      );
+    }
+
+    /* =============================================
+       STATS BAR
+    ============================================= */
+
+    function Stats() {
+      const ref = useReveal();
+      const data = [
+        { val:'10+',  label:'Años de experiencia'      },
+        { val:'500+', label:'Vehículos tratados'        },
+        { val:'100%', label:'Satisfacción garantizada'  },
+        { val:'7',    label:'Servicios especializados'  },
+      ];
+      return (
+        <section className="py-14 bg-[#0d0d0d] border-y border-white/[.05]">
+          <div className="max-w-5xl mx-auto px-5">
+            <div ref={ref} className="rv grid grid-cols-2 md:grid-cols-4 gap-3">
+              {data.map((s, i) => (
+                <div key={i} className="text-center py-7 px-4 rounded-2xl bg-white/[.025] border border-white/[.06] hover:border-brand/25 transition-colors">
+                  <div className="text-4xl font-black text-brand mb-1.5">{s.val}</div>
+                  <div className="text-white/40 text-sm">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /* =============================================
+       SERVICES
+    ============================================= */
+
+    function Services() {
+      const titleRef = useReveal();
+      return (
+        <section id="servicios" className="py-24 bg-[#080808]">
+          <div className="max-w-6xl mx-auto px-5 md:px-8">
+
+            <div className="text-center mb-16">
+              <div ref={titleRef} className="rv">
+                <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Lo que hacemos</span>
+                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Nuestros Servicios</h2>
+                <p className="text-white/45 max-w-lg mx-auto text-base leading-relaxed">
+                  Cada servicio está diseñado para llevar tu vehículo al máximo nivel de cuidado, protección y presentación.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {SERVICES.map((s, i) => <ServiceCard key={i} s={s} delay={i * 65} />)}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function ServiceCard({ s, delay }) {
+      const ref = useReveal(delay);
+      return (
+        <div ref={ref} className="rv group relative bg-[#111] border border-white/[.07] rounded-2xl p-7 hover:border-brand/35 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-brand/[.05] overflow-hidden cursor-default">
+          {/* Glow line bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Corner accent */}
+          <div className="absolute -top-10 -right-10 w-28 h-28 bg-brand/[.03] rounded-full group-hover:bg-brand/[.07] transition-colors duration-500" />
+
+          <div className="relative">
+            <div className="w-12 h-12 bg-brand/[.1] border border-brand/[.2] rounded-xl flex items-center justify-center mb-5 group-hover:bg-brand/[.15] transition-colors duration-300">
+              <i className={`fas ${s.icon} text-brand text-lg`}></i>
+            </div>
+            <h3 className="text-white font-bold text-lg mb-3 leading-snug">{s.name}</h3>
+            <p className="text-white/45 text-sm leading-relaxed">{s.desc}</p>
+          </div>
+        </div>
+      );
+    }
+
+    /* =============================================
+       GALLERY
+    ============================================= */
+
+    function Gallery() {
+      const [showAll, setShowAll] = useState(false);
+      const titleRef = useReveal();
+      const imgs = showAll ? GALLERY : GALLERY.slice(0, 12);
+
+      return (
+        <section id="galeria" className="py-24 bg-[#0d0d0d] border-y border-white/[.05]">
+          <div className="max-w-6xl mx-auto px-5 md:px-8">
+
+            <div className="text-center mb-14">
+              <div ref={titleRef} className="rv">
+                <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Resultados reales</span>
+                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Galería de Trabajos</h2>
+                <p className="text-white/45 max-w-lg mx-auto text-base">
+                  Cada foto es un resultado real. El trabajo habla por sí solo.
+                </p>
+              </div>
+            </div>
+
+            <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
+              {imgs.map((src, i) => (
+                <div key={i} className="group break-inside-avoid overflow-hidden rounded-xl border border-white/[.06] hover:border-brand/30 transition-all duration-300">
+                  <div className="relative overflow-hidden">
+                    <img src={src} alt={`Trabajo ${i + 1}`} loading="lazy"
+                      className="w-full h-auto block transition-transform duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {!showAll && (
+              <div className="text-center mt-10">
+                <button onClick={() => setShowAll(true)}
+                  className="px-8 py-3.5 border border-brand/35 text-brand font-semibold rounded-xl hover:bg-brand/[.08] transition-all text-sm">
+                  <i className="fas fa-images mr-2"></i>
+                  Ver todas las fotos ({GALLERY.length})
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    /* =============================================
+       WHY US
+    ============================================= */
+
+    function WhyUs() {
+      const textRef = useReveal();
+      return (
+        <section id="nosotros" className="py-24 bg-[#080808]">
+          <div className="max-w-6xl mx-auto px-5 md:px-8">
+            <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+              <div ref={textRef} className="rv">
+                <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">¿Por qué elegirnos?</span>
+                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-5 leading-tight">
+                  No solo lavamos.<br />
+                  <span className="text-gradient">Transformamos.</span>
+                </h2>
+                <p className="text-white/55 text-base leading-relaxed mb-3">
+                  Somos un equipo de especialistas comprometidos con llevar cada vehículo a su mejor estado posible.
+                </p>
+                <p className="text-white/45 text-base leading-relaxed mb-9">
+                  Cada trabajo es una oportunidad de demostrar que el detailing de calidad hace una diferencia real, visible y duradera.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button onClick={() => goTo('turnos')}
+                    className="px-7 py-3.5 bg-brand text-black font-bold rounded-xl hover:bg-brand-dark transition-all hover:-translate-y-px text-sm">
+                    Agendar mi turno
+                  </button>
+                  <a href={`${WA_BASE}?text=${encodeURIComponent('Hola Morrey Detailing! Quiero consultar sobre sus servicios.')}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="px-7 py-3.5 border border-white/[.1] text-white/60 font-semibold rounded-xl hover:bg-white/[.05] hover:text-white/80 transition-all text-sm text-center">
+                    Consultar por WhatsApp
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {WHY_US.map((item, i) => <WhyCard key={i} item={item} delay={i * 80} />)}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function WhyCard({ item, delay }) {
+      const ref = useReveal(delay);
+      return (
+        <div ref={ref} className="rv flex items-start gap-4 p-5 bg-[#111] rounded-xl border border-white/[.06] hover:border-brand/25 transition-all duration-250">
+          <div className="flex-shrink-0 w-10 h-10 bg-brand/[.1] border border-brand/[.2] rounded-lg flex items-center justify-center">
+            <i className={`fas ${item.icon} text-brand text-sm`}></i>
+          </div>
+          <div>
+            <h4 className="font-bold text-white text-sm mb-1">{item.title}</h4>
+            <p className="text-white/40 text-xs leading-relaxed">{item.desc}</p>
+          </div>
+        </div>
+      );
+    }
+
+    /* =============================================
+       TESTIMONIALS
+    ============================================= */
+
+    function Testimonials() {
+      const titleRef = useReveal();
+      return (
+        <section className="py-24 bg-[#0d0d0d] border-y border-white/[.05]">
+          <div className="max-w-6xl mx-auto px-5 md:px-8">
+
+            <div className="text-center mb-14">
+              <div ref={titleRef} className="rv">
+                <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Lo que dicen nuestros clientes</span>
+                <h2 className="text-4xl md:text-5xl font-black mt-3">Testimonios</h2>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-5">
+              {TESTIMONIALS.map((t, i) => <TestCard key={i} t={t} delay={i * 90} />)}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function TestCard({ t, delay }) {
+      const ref = useReveal(delay);
+      return (
+        <div ref={ref} className="rv bg-[#111] border border-white/[.07] rounded-2xl p-7 hover:border-brand/20 transition-all">
+          <Stars n={t.stars} />
+          <p className="text-white/60 text-sm leading-relaxed mt-4 mb-5 italic">"{t.text}"</p>
+          <div className="flex items-center gap-3 pt-4 border-t border-white/[.06]">
+            <div className="w-9 h-9 bg-brand/[.12] border border-brand/25 rounded-full flex items-center justify-center text-brand text-sm font-black">
+              {t.name[0]}
+            </div>
+            <div>
+              <div className="font-semibold text-sm text-white">{t.name}</div>
+              <div className="text-white/30 text-xs">{t.vehicle}</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* =============================================
+       BOOKING
+    ============================================= */
+
+    function Booking() {
+      const titleRef = useReveal();
+      const cardRef  = useReveal(120);
+
+      const [form, setForm] = useState({ service:'', date:'', time:'', name:'', phone:'', vehicle:'' });
+      const [err,  setErr]  = useState({});
+
+      const upd = (k, v) => {
+        setForm(p => ({ ...p, [k]: v }));
+        setErr(p => ({ ...p, [k]: false }));
+      };
+
+      const submit = () => {
+        const e = {};
+        Object.keys(form).forEach(k => { if (!form[k].trim()) e[k] = true; });
+        setErr(e);
+        if (Object.keys(e).length) return;
+        const msg = `Hola! Quiero reservar un turno para *${form.service}*, el día *${form.date}* a las *${form.time}*. Mi nombre es *${form.name}*, mi vehículo es *${form.vehicle}* y mi teléfono es *${form.phone}*.`;
+        window.open(`${WA_BASE}?text=${encodeURIComponent(msg)}`, '_blank');
+      };
+
+      const base = f => `w-full bg-[#0d0d0d] border ${err[f] ? 'border-red-500/60' : 'border-white/[.1]'} rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-all`;
+
+      return (
+        <section id="turnos" className="py-24 bg-[#080808]">
+          <div className="max-w-3xl mx-auto px-5 md:px-8">
+
+            <div className="text-center mb-12">
+              <div ref={titleRef} className="rv">
+                <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Reservá online</span>
+                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Agendar Turno</h2>
+                <p className="text-white/45 text-base max-w-md mx-auto">
+                  Completá el formulario y te contactamos para confirmar. Rápido y sin vueltas.
+                </p>
+              </div>
+            </div>
+
+            <div ref={cardRef} className="rv bg-[#111] border border-white/[.08] rounded-3xl p-7 md:p-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+
+                {/* Servicio */}
+                <div>
+                  <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Servicio *</label>
+                  <select value={form.service} onChange={e => upd('service', e.target.value)}
+                    style={{ background:'#0d0d0d' }}
+                    className={base('service') + ' cursor-pointer'}>
+                    <option value="">Seleccionar servicio</option>
+                    {SERVICES.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                  </select>
+                  {err.service && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                </div>
+
+                {/* Fecha */}
+                <div>
+                  <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Fecha *</label>
+                  <input type="date" value={form.date} onChange={e => upd('date', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className={base('date')} />
+                  {err.date && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                </div>
+
+                {/* Horario */}
+                <div>
+                  <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Horario *</label>
+                  <select value={form.time} onChange={e => upd('time', e.target.value)}
+                    style={{ background:'#0d0d0d' }}
+                    className={base('time') + ' cursor-pointer'}>
+                    <option value="">Seleccionar horario</option>
+                    {TIMES.map(t => <option key={t} value={t}>{t} hs</option>)}
+                  </select>
+                  {err.time && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                </div>
+
+                {/* Nombre */}
+                <div>
+                  <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Nombre completo *</label>
+                  <input type="text" value={form.name} onChange={e => upd('name', e.target.value)}
+                    placeholder="Tu nombre y apellido" autoComplete="name" className={base('name')} />
+                  {err.name && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                </div>
+
+                {/* Teléfono */}
+                <div>
+                  <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Teléfono *</label>
+                  <input type="tel" value={form.phone} onChange={e => upd('phone', e.target.value)}
+                    placeholder="11 1234-5678" autoComplete="tel" className={base('phone')} />
+                  {err.phone && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                </div>
+
+                {/* Vehículo */}
+                <div>
+                  <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Vehículo *</label>
+                  <input type="text" value={form.vehicle} onChange={e => upd('vehicle', e.target.value)}
+                    placeholder="Ej: Toyota Corolla 2021" className={base('vehicle')} />
+                  {err.vehicle && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                </div>
+              </div>
+
+              <button onClick={submit}
+                className="w-full py-4 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold text-base rounded-2xl flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-green-500/20 active:translate-y-0">
+                <i className="fab fa-whatsapp text-xl"></i>
+                Enviar solicitud por WhatsApp
+              </button>
+
+              <p className="text-white/20 text-[11px] text-center mt-4 leading-relaxed">
+                Al hacer clic se abrirá WhatsApp con tu solicitud completa. Te confirmaremos el turno a la brevedad.
+              </p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /* =============================================
+       CTA FINAL
+    ============================================= */
+
+    function CTA() {
+      const ref = useReveal();
+      return (
+        <section className="py-28 bg-[#0d0d0d] border-t border-white/[.05] relative overflow-hidden">
+          {/* Ambient glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-brand/[.03] rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand/[.03] via-transparent to-transparent pointer-events-none" />
+
+          <div className="relative max-w-3xl mx-auto px-5 text-center" ref={ref}>
+            <div className="rv">
+              <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">¿Listo para empezar?</span>
+              <h2 className="text-4xl md:text-6xl font-black mt-4 mb-5 leading-tight">
+                Dale a tu vehículo<br />el cuidado que<br />
+                <span className="text-gradient">realmente merece.</span>
+              </h2>
+              <p className="text-white/50 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+                Escribinos por WhatsApp y coordinamos el turno que más te convenga. Sin vueltas, sin esperas.
+              </p>
+
+              <a href={`${WA_BASE}?text=${encodeURIComponent('Hola Morrey Detailing! Quiero consultar sobre sus servicios.')}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-10 py-5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold text-xl rounded-2xl transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-500/20 active:translate-y-0">
+                <i className="fab fa-whatsapp text-2xl"></i>
+                Hablar por WhatsApp
+              </a>
+
+              <div className="mt-14 flex flex-wrap items-center justify-center gap-8">
+                <a href="tel:+541156359321" className="flex items-center gap-2 text-white/40 hover:text-white/70 transition-colors text-sm">
+                  <i className="fas fa-phone text-brand text-xs"></i> 11 5635-9321
+                </a>
+                <a href="https://www.instagram.com/morrey.detail/" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-white/40 hover:text-white/70 transition-colors text-sm">
+                  <i className="fab fa-instagram text-brand text-xs"></i> @morrey.detail
+                </a>
+                <span className="flex items-center gap-2 text-white/35 text-sm">
+                  <i className="fas fa-clock text-brand text-xs"></i> Lun–Vie 9–18hs · Sáb 9–13hs
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    /* =============================================
+       FOOTER
+    ============================================= */
+
+    function Footer() {
+      return (
+        <footer className="bg-[#080808] border-t border-white/[.04] pt-10 pb-6 px-5">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 pb-8 border-b border-white/[.04]">
+
+              <div className="flex items-center gap-3">
+                <img src="logo2.5.jpg" alt="Morrey Detailing" className="h-10 w-auto object-contain" />
+                <div>
+                  <div className="font-bold text-white text-sm">Morrey Detailing</div>
+                  <div className="text-white/30 text-xs mt-0.5">Detailing automotriz premium</div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-6">
+                {NAV_LINKS.map(l => (
+                  <button key={l.id} onClick={() => goTo(l.id)}
+                    className="text-white/35 hover:text-white/70 text-sm transition-colors">
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <a href={WA_BASE} target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 bg-[#25D366]/[.1] border border-[#25D366]/20 rounded-full flex items-center justify-center text-[#25D366] hover:bg-[#25D366]/20 transition-colors text-sm">
+                  <i className="fab fa-whatsapp"></i>
+                </a>
+                <a href="https://www.instagram.com/morrey.detail/" target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 bg-brand/[.1] border border-brand/20 rounded-full flex items-center justify-center text-brand hover:bg-brand/20 transition-colors text-sm">
+                  <i className="fab fa-instagram"></i>
+                </a>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-5">
+              <p className="text-white/18 text-xs">© 2025 Morrey Detailing. Todos los derechos reservados.</p>
+              <div className="flex items-center gap-4">
+                <span className="text-white/18 text-xs">Buenos Aires, Argentina</span>
+                <a href="admin.html" className="text-white/[.08] hover:text-white/25 text-xs transition-colors">Admin</a>
+              </div>
+            </div>
+          </div>
+        </footer>
+      );
+    }
+
+    /* =============================================
+       WHATSAPP FLOAT
+    ============================================= */
+
+    function WAFloat() {
+      return (
+        <a href={`${WA_BASE}?text=${encodeURIComponent('Hola Morrey Detailing! Me gustaría consultar sobre sus servicios.')}`}
+          target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center text-white text-2xl wa-ripple hover:-translate-y-1 transition-transform shadow-xl shadow-black/30">
+          <i className="fab fa-whatsapp"></i>
+        </a>
+      );
+    }
+
+    /* =============================================
+       APP
+    ============================================= */
+
+    function App() {
+      return (
+        <>
+          <Navbar />
+          <Hero />
+          <Stats />
+          <Services />
+          <Gallery />
+          <WhyUs />
+          <Testimonials />
+          <Booking />
+          <CTA />
+          <Footer />
+          <WAFloat />
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
 </html>
