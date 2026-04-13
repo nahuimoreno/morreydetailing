@@ -576,6 +576,19 @@
         Object.keys(form).forEach(k => { if (!form[k].trim()) e[k] = true; });
         setErr(e);
         if (Object.keys(e).length) return;
+
+        // Guardar en localStorage para que el admin pueda verlo y responder
+        try {
+          const bookings = JSON.parse(localStorage.getItem('morrey_bookings') || '[]');
+          bookings.push({
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+            ...form,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+          });
+          localStorage.setItem('morrey_bookings', JSON.stringify(bookings));
+        } catch(_) {}
+
         const msg = `Hola! Quiero reservar un turno para *${form.service}*, el día *${form.date}* a las *${form.time}*. Mi nombre es *${form.name}*, mi vehículo es *${form.vehicle}* y mi teléfono es *${form.phone}*.`;
         window.open(`${WA_BASE}?text=${encodeURIComponent(msg)}`, '_blank');
       };

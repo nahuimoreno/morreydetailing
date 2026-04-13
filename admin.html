@@ -295,6 +295,8 @@
     .ba-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
     .ba-btn.confirm { border-color: rgba(46,204,113,0.3); color: var(--green); }
     .ba-btn.confirm:hover { background: rgba(46,204,113,0.1); }
+    .ba-btn.wa { border-color: rgba(37,211,102,0.35); color: #25D366; }
+    .ba-btn.wa:hover { background: rgba(37,211,102,0.12); }
     .ba-btn.cancel { border-color: rgba(255,77,77,0.3); color: var(--red); }
     .ba-btn.cancel:hover { background: rgba(255,77,77,0.1); }
     .ba-btn.delete { border-color: rgba(255,77,77,0.15); color: rgba(255,77,77,0.5); }
@@ -1016,13 +1018,45 @@ function renderBookings() {
           </div>
         </div>
         <div class="booking-actions-col">
-          ${b.status !== 'confirmed' && b.status !== 'cancelled' ? `<button class="ba-btn confirm" onclick="updateStatus('${b.id}','confirmed')"><i class="fas fa-check"></i> Confirmar</button>` : ''}
+          ${b.status !== 'confirmed' && b.status !== 'cancelled' ? `<button class="ba-btn confirm" onclick="confirmAndNotify('${b.id}')"><i class="fas fa-check"></i> Confirmar</button>` : ''}
+          <a href="${buildClientWA(b)}" target="_blank" rel="noopener noreferrer">
+            <button class="ba-btn wa" title="Enviar WhatsApp al cliente"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+          </a>
           ${b.status !== 'cancelled' ? `<button class="ba-btn cancel" onclick="updateStatus('${b.id}','cancelled')"><i class="fas fa-times"></i> Cancelar</button>` : ''}
           <button class="ba-btn delete" onclick="deleteBooking('${b.id}')"><i class="fas fa-trash"></i></button>
         </div>
       </div>
     `;
   }).join('');
+}
+
+// Formatea el número del cliente para wa.me (Argentina)
+function formatWAPhone(phone) {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (digits.startsWith('54')) return digits;
+  if (digits.startsWith('0'))  return '54' + digits.slice(1);
+  return '54' + digits;
+}
+
+// Genera el link de WA al cliente con mensaje personalizable
+function buildClientWA(b) {
+  const phone = formatWAPhone(b.phone);
+  const [y, m, d] = (b.date || '--').split('-');
+  const msg = `Hola ${b.name}! Te confirmamos tu turno en Morrey Detailing 🚗✨\n\n📋 Servicio: ${b.service}\n📅 Fecha: ${d}/${m}/${y}\n🕐 Horario: ${b.time} hs\n\n¡Te esperamos! Cualquier duda escribinos.`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}
+
+// Confirma el turno Y abre WA al cliente
+function confirmAndNotify(id) {
+  const bookings = getBookings();
+  const idx = bookings.findIndex(b => b.id === id);
+  if (idx < 0) return;
+  bookings[idx].status = 'confirmed';
+  saveBookings(bookings);
+  renderBookings();
+  showToast('✓ Turno confirmado', 'success');
+  // Abrir WhatsApp al cliente
+  setTimeout(() => window.open(buildClientWA(bookings[idx]), '_blank'), 400);
 }
 
 function updateStatus(id, status) {
