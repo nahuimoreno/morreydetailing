@@ -44,5 +44,5 @@
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SUPABASE_URL      = 'https://YOUR-PROJECT-ID.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY-HERE';
+const SUPABASE_URL      = 'https://nhzrfclygfnhdgfxaait.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_6nsGvkukjl5mMJwga02Sag_grOy6IWp';
