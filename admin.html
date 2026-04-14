@@ -97,6 +97,17 @@ const STATUS = {
 };
 
 // ═══════════════════════════════════════════
+//  PAYMENT STATUS
+// ═══════════════════════════════════════════
+const PAYMENT_STATUS = {
+  unpaid:  { label:'Sin cobrar', cls:'bg-gray-500/15 text-gray-400 border border-gray-500/25',      dot:'bg-gray-500' },
+  partial: { label:'Parcial',    cls:'bg-orange-500/15 text-orange-400 border border-orange-500/25', dot:'bg-orange-400' },
+  paid:    { label:'Pagado',     cls:'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25', dot:'bg-emerald-400' },
+};
+const PAYMENT_METHODS = ['Efectivo','Transferencia','Tarjeta débito','Tarjeta crédito','Otro'];
+const fmtMoney = n => (n !== undefined && n !== '' && n !== null) ? `$${Number(n).toLocaleString('es-AR')}` : '—';
+
+// ═══════════════════════════════════════════
 //  DEFAULTS
 // ═══════════════════════════════════════════
 const ICONS = ['fa-car-side','fa-couch','fa-cog','fa-sun','fa-shield-alt','fa-gem','fa-lightbulb','fa-spray-can','fa-water','fa-star','fa-wrench','fa-paint-brush'];
@@ -186,6 +197,11 @@ const useConfirm = () => useContext(ConfirmCtx);
 // ═══════════════════════════════════════════
 function StatusBadge({status}) {
   const s = STATUS[status] || STATUS.pending;
+  return <span className={`badge ${s.cls}`}><span className={`w-1.5 h-1.5 rounded-full ${s.dot} inline-block`}></span>{s.label}</span>;
+}
+
+function PaymentBadge({status}) {
+  const s = PAYMENT_STATUS[status] || PAYMENT_STATUS.unpaid;
   return <span className={`badge ${s.cls}`}><span className={`w-1.5 h-1.5 rounded-full ${s.dot} inline-block`}></span>{s.label}</span>;
 }
 
@@ -349,10 +365,15 @@ function Dashboard({bookings, clients, services}) {
     .sort((a,b) => (a.date+a.time) > (b.date+b.time) ? 1 : -1)
     .slice(0, 5);
 
+  const now3 = new Date();
+  const monthIncomeDash = bookings
+    .filter(b => b.status==='completed' && b.paymentAmount != null && (() => { const d=new Date((b.paymentDate||b.date||'').slice(0,10)+'T12:00:00'); return d.getMonth()===now3.getMonth()&&d.getFullYear()===now3.getFullYear(); })())
+    .reduce((s,b)=>s+(Number(b.paymentAmount)||0),0);
+
   const stats = [
     {icon:'fa-calendar-day', label:'Turnos hoy', value:todayBookings.length, sub:`${todayBookings.filter(b=>b.status==='confirmed').length} confirmados`, color:'text-brand', bg:'bg-brand/10'},
     {icon:'fa-calendar-week', label:'Esta semana', value:weekBookings.length, sub:`${weekBookings.filter(b=>b.status==='pending').length} pendientes`, color:'text-blue-400', bg:'bg-blue-400/10'},
-    {icon:'fa-users', label:'Clientes', value:clients.length, sub:`${vips} VIP`, color:'text-purple-400', bg:'bg-purple-400/10'},
+    {icon:'fa-dollar-sign', label:'Ingresos del mes', value:fmtMoney(monthIncomeDash), sub:`${bookings.filter(b=>b.status==='completed').length} finalizados`, color:'text-emerald-400', bg:'bg-emerald-400/10'},
     {icon:'fa-clock', label:'Por confirmar', value:pending, sub:'turnos pendientes', color:'text-orange-400', bg:'bg-orange-400/10'},
   ];
 
@@ -534,6 +555,124 @@ function TurnoModal({turno, onClose, onSave, services, bookings, config}) {
 }
 
 // ═══════════════════════════════════════════
+//  PAYMENT MODAL
+// ═══════════════════════════════════════════
+function PaymentModal({turno, onClose, onSave}) {
+  const [form, setForm] = useState({
+    priceEstimate: turno.priceEstimate || '',
+    paymentAmount: turno.paymentAmount || '',
+    paymentMethod: turno.paymentMethod || 'Efectivo',
+    paymentNotes:  turno.paymentNotes  || '',
+  });
+  const toast = useToast();
+  const set = (k,v) => setForm(p => ({...p,[k]:v}));
+
+  const calcStatus = (amount, estimate) => {
+    const a = Number(amount); const e = Number(estimate);
+    if (!a) return 'unpaid';
+    if (e && a < e) return 'partial';
+    return 'paid';
+  };
+
+  const saveFn = () => {
+    const ps = calcStatus(form.paymentAmount, form.priceEstimate);
+    onSave({
+      ...turno,
+      status: 'completed',
+      paymentStatus:  ps,
+      paymentAmount:  form.paymentAmount !== '' ? Number(form.paymentAmount) : undefined,
+      paymentMethod:  form.paymentMethod,
+      paymentNotes:   form.paymentNotes,
+      priceEstimate:  form.priceEstimate !== '' ? Number(form.priceEstimate) : undefined,
+      paymentDate:    new Date().toISOString(),
+    });
+  };
+
+  const skip = () => {
+    onSave({...turno, status:'completed', paymentStatus:'unpaid'});
+  };
+
+  const previewStatus = calcStatus(form.paymentAmount, form.priceEstimate);
+
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal fade-in" style={{maxWidth:460}} onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-[#1e1e1e]">
+          <div>
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <i className="fas fa-dollar-sign text-brand"></i> Registrar cobro
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">Turno finalizado — {turno.name}</p>
+          </div>
+          <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5" onClick={onClose}>
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+        {/* Turno summary */}
+        <div className="mx-5 mt-5 p-3 rounded-xl bg-white/3 border border-white/5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
+            <i className="fas fa-car text-brand text-sm"></i>
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">{turno.service || '—'}</div>
+            <div className="text-xs text-gray-500">{fmtDate(turno.date)}{turno.time ? ` — ${turno.time}` : ''}{turno.vehicle ? ` · ${turno.vehicle}` : ''}</div>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Presupuesto estimado">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                <input className="input pl-7" type="number" min="0" placeholder="0"
+                  value={form.priceEstimate} onChange={e=>set('priceEstimate',e.target.value)} />
+              </div>
+            </FormField>
+            <FormField label="Monto abonado">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                <input className="input pl-7" type="number" min="0" placeholder="0" autoFocus
+                  value={form.paymentAmount} onChange={e=>set('paymentAmount',e.target.value)} />
+              </div>
+            </FormField>
+          </div>
+          <FormField label="Método de pago">
+            <div className="flex gap-2 flex-wrap">
+              {PAYMENT_METHODS.map(m => (
+                <button key={m} type="button" onClick={()=>set('paymentMethod',m)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${form.paymentMethod===m?'bg-brand/15 border-brand/40 text-brand':'bg-white/3 border-white/5 text-gray-400 hover:border-white/10'}`}>
+                  {m}
+                </button>
+              ))}
+            </div>
+          </FormField>
+          <FormField label="Observaciones">
+            <input className="input" value={form.paymentNotes} onChange={e=>set('paymentNotes',e.target.value)}
+              placeholder="Ej: pagó con transferencia, falta seña..." />
+          </FormField>
+          {/* Status preview */}
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-white/2">
+            <span className="text-xs text-gray-500">Estado del pago:</span>
+            <PaymentBadge status={previewStatus} />
+            {form.priceEstimate && form.paymentAmount && (
+              <span className="text-xs text-gray-600 ml-auto">
+                {fmtMoney(form.paymentAmount)} / {fmtMoney(form.priceEstimate)}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="p-5 border-t border-[#1e1e1e] flex gap-3">
+          <button className="btn btn-ghost text-xs" onClick={skip}>Omitir por ahora</button>
+          <div className="flex gap-2 ml-auto">
+            <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+            <button className="btn btn-brand" onClick={saveFn}><i className="fas fa-save"></i> Guardar cobro</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
 //  TURNOS PAGE
 // ═══════════════════════════════════════════
 function TurnosPage({bookings, setBookings, services, config}) {
@@ -541,6 +680,7 @@ function TurnosPage({bookings, setBookings, services, config}) {
   const [dateFilter, setDateFilter] = useState('');
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // null | 'new' | turno
+  const [paymentModal, setPaymentModal] = useState(null); // null | turno
   const toast = useToast();
   const confirm = useConfirm();
 
@@ -569,8 +709,22 @@ function TurnosPage({bookings, setBookings, services, config}) {
   };
 
   const changeStatus = (id, status) => {
+    if (status === 'completed') {
+      const turno = bookings.find(b => b.id === id);
+      // Update status first, then open payment modal
+      setBookings(prev => { const n=prev.map(b=>b.id===id?{...b,status}:b); save('morrey_bookings',n); return n; });
+      setPaymentModal({...turno, status:'completed'});
+      return;
+    }
     setBookings(prev => { const n=prev.map(b=>b.id===id?{...b,status}:b); save('morrey_bookings',n); return n; });
     toast(`Estado actualizado a "${STATUS[status].label}"`, 'success');
+  };
+
+  const savePayment = (updated) => {
+    setBookings(prev => { const n=prev.map(b=>b.id===updated.id?updated:b); save('morrey_bookings',n); return n; });
+    setPaymentModal(null);
+    const ps = updated.paymentStatus;
+    toast(ps==='paid' ? '¡Cobro registrado!' : ps==='partial' ? 'Pago parcial registrado' : 'Turno finalizado sin cobro', ps==='paid'?'success':'info');
   };
 
   const sendWA = (b) => {
@@ -641,6 +795,7 @@ function TurnosPage({bookings, setBookings, services, config}) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-sm">{b.name}</span>
                     <StatusBadge status={b.status} />
+                    {b.status==='completed' && <PaymentBadge status={b.paymentStatus||'unpaid'} />}
                   </div>
                   <div className="flex items-center gap-3 flex-wrap mt-1">
                     {b.phone && <span className="text-xs text-gray-500 flex items-center gap-1"><i className="fas fa-phone"></i>{b.phone}</span>}
@@ -651,6 +806,12 @@ function TurnosPage({bookings, setBookings, services, config}) {
                     <span className="text-xs text-gray-400 flex items-center gap-1"><i className="fas fa-calendar text-gray-600"></i>{fmtDate(b.date)}{b.time&&` — ${b.time}`}</span>
                   </div>
                   {b.notes && <p className="text-xs text-gray-600 mt-1.5 italic">"{b.notes}"</p>}
+                  {b.status==='completed' && b.paymentAmount != null && (
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1"><i className="fas fa-dollar-sign text-xs"></i>{fmtMoney(b.paymentAmount)}</span>
+                      {b.paymentMethod && <span className="text-xs text-gray-600">{b.paymentMethod}</span>}
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Actions */}
@@ -669,6 +830,16 @@ function TurnosPage({bookings, setBookings, services, config}) {
                     <i className="fas fa-bell"></i><span className="hidden sm:inline">Recordar</span>
                   </button>
                 )}
+                {b.status==='completed' && (!b.paymentStatus || b.paymentStatus==='unpaid') && (
+                  <button className="btn btn-sm" style={{background:'rgba(52,211,153,.15)',color:'#34d399',border:'1px solid rgba(52,211,153,.25)'}} onClick={()=>setPaymentModal(b)}>
+                    <i className="fas fa-dollar-sign"></i><span className="hidden sm:inline">Cobrar</span>
+                  </button>
+                )}
+                {b.status==='completed' && b.paymentStatus && b.paymentStatus!=='unpaid' && (
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setPaymentModal(b)} title="Editar cobro">
+                    <i className="fas fa-receipt"></i>
+                  </button>
+                )}
                 <button className="btn btn-ghost btn-sm ml-auto" onClick={()=>setModal(b)}>
                   <i className="fas fa-pencil"></i>
                 </button>
@@ -684,6 +855,9 @@ function TurnosPage({bookings, setBookings, services, config}) {
       {modal && (
         <TurnoModal turno={modal==='new'?null:modal} onClose={()=>setModal(null)}
           onSave={saveTurno} services={services} bookings={bookings} config={config} />
+      )}
+      {paymentModal && (
+        <PaymentModal turno={paymentModal} onClose={()=>setPaymentModal(null)} onSave={savePayment} />
       )}
     </div>
   );
@@ -1379,17 +1553,273 @@ function ConfigPage() {
 }
 
 // ═══════════════════════════════════════════
+//  CAJA PAGE
+// ═══════════════════════════════════════════
+function CajaPage({bookings, setBookings}) {
+  const [period, setPeriod] = useState('month'); // today | week | month | year | all
+  const [methodFilter, setMethodFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [editPayment, setEditPayment] = useState(null);
+  const toast = useToast();
+
+  const paid = bookings.filter(b => b.status === 'completed' && b.paymentStatus && b.paymentStatus !== 'unpaid');
+
+  const inPeriod = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr.slice(0,10)+'T12:00:00');
+    const now = new Date();
+    if (period === 'today') return dateStr.slice(0,10) === today();
+    if (period === 'week') {
+      const start = new Date(now); start.setDate(now.getDate() - now.getDay() + 1); start.setHours(0,0,0,0);
+      const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+      return d >= start && d <= end;
+    }
+    if (period === 'month') return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+    if (period === 'year') return d.getFullYear()===now.getFullYear();
+    return true;
+  };
+
+  const periodPaid = paid.filter(b => inPeriod(b.paymentDate || b.date));
+  const totalIncome = periodPaid.reduce((s,b) => s + (Number(b.paymentAmount)||0), 0);
+  const avgTicket = periodPaid.length ? totalIncome / periodPaid.length : 0;
+
+  // All time stats
+  const totalEver = paid.reduce((s,b)=>s+(Number(b.paymentAmount)||0),0);
+  const todayIncome = paid.filter(b=>(b.paymentDate||b.date||'').slice(0,10)===today()).reduce((s,b)=>s+(Number(b.paymentAmount)||0),0);
+  const now2 = new Date();
+  const monthIncome = paid.filter(b=>{const d=new Date((b.paymentDate||b.date||'').slice(0,10)+'T12:00:00');return d.getMonth()===now2.getMonth()&&d.getFullYear()===now2.getFullYear();}).reduce((s,b)=>s+(Number(b.paymentAmount)||0),0);
+  const yearIncome = paid.filter(b=>new Date((b.paymentDate||b.date||'').slice(0,10)+'T12:00:00').getFullYear()===now2.getFullYear()).reduce((s,b)=>s+(Number(b.paymentAmount)||0),0);
+
+  // Method breakdown for period
+  const byMethod = {};
+  periodPaid.forEach(b => {
+    const m = b.paymentMethod || 'Sin especificar';
+    byMethod[m] = (byMethod[m]||0) + (Number(b.paymentAmount)||0);
+  });
+
+  // Filtered history
+  const history = paid
+    .filter(b => methodFilter==='all' || b.paymentMethod===methodFilter)
+    .filter(b => !search || b.name?.toLowerCase().includes(search.toLowerCase()) || b.service?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b) => (b.paymentDate||b.date||'') > (a.paymentDate||a.date||'') ? 1 : -1);
+
+  const savePaymentEdit = (updated) => {
+    setBookings(prev => { const n=prev.map(b=>b.id===updated.id?updated:b); save('morrey_bookings',n); return n; });
+    setEditPayment(null);
+    toast('Cobro actualizado', 'success');
+  };
+
+  const periods = [
+    {k:'today',label:'Hoy'},
+    {k:'week',label:'Esta semana'},
+    {k:'month',label:'Este mes'},
+    {k:'year',label:'Este año'},
+    {k:'all',label:'Todo'},
+  ];
+
+  const methodIcons = {'Efectivo':'fa-money-bill-wave','Transferencia':'fa-mobile-screen','Tarjeta débito':'fa-credit-card','Tarjeta crédito':'fa-credit-card','Otro':'fa-circle-dot'};
+
+  return (
+    <div className="fade-in space-y-6">
+      <PageHeader title="Caja / Ingresos" subtitle="Registro de cobros y análisis financiero" />
+
+      {/* Top KPIs — always all-time reference */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {label:'Hoy', value:todayIncome, icon:'fa-sun', color:'text-brand', bg:'bg-brand/10'},
+          {label:'Este mes', value:monthIncome, icon:'fa-calendar', color:'text-blue-400', bg:'bg-blue-400/10'},
+          {label:'Este año', value:yearIncome, icon:'fa-chart-line', color:'text-purple-400', bg:'bg-purple-400/10'},
+          {label:'Total histórico', value:totalEver, icon:'fa-trophy', color:'text-orange-400', bg:'bg-orange-400/10'},
+        ].map((s,i) => (
+          <div key={i} className="stat-card">
+            <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
+              <i className={`fas ${s.icon} ${s.color}`}></i>
+            </div>
+            <div className="text-xl font-bold mb-0.5 tabular-nums">{fmtMoney(s.value)}</div>
+            <div className="text-xs font-semibold text-gray-400">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Period analysis */}
+        <div className="card p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="font-semibold text-sm text-gray-300 flex items-center gap-2">
+              <i className="fas fa-chart-bar text-brand"></i> Análisis por período
+            </h2>
+            <div className="flex gap-1.5 flex-wrap">
+              {periods.map(p => (
+                <button key={p.k} onClick={()=>setPeriod(p.k)}
+                  className={`pill-filter text-xs py-1 px-3 ${period===p.k?'active':''}`}>{p.label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="p-3 rounded-xl bg-white/3 border border-white/5">
+              <div className="text-xs text-gray-500 mb-1">Ingresos</div>
+              <div className="text-lg font-bold text-brand tabular-nums">{fmtMoney(totalIncome)}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-white/3 border border-white/5">
+              <div className="text-xs text-gray-500 mb-1">Cobros</div>
+              <div className="text-lg font-bold tabular-nums">{periodPaid.length}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-white/3 border border-white/5">
+              <div className="text-xs text-gray-500 mb-1">Ticket prom.</div>
+              <div className="text-lg font-bold tabular-nums">{fmtMoney(Math.round(avgTicket))}</div>
+            </div>
+          </div>
+          {/* Method breakdown bars */}
+          {Object.keys(byMethod).length > 0 && (
+            <div>
+              <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-3">Por método de pago</p>
+              <div className="space-y-2.5">
+                {Object.entries(byMethod).sort((a,b)=>b[1]-a[1]).map(([method, amount]) => {
+                  const pct = totalIncome ? Math.round((amount/totalIncome)*100) : 0;
+                  return (
+                    <div key={method}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-400 flex items-center gap-1.5">
+                          <i className={`fas ${methodIcons[method]||'fa-circle-dot'} text-gray-600`}></i>{method}
+                        </span>
+                        <span className="text-gray-300 font-medium">{fmtMoney(amount)} <span className="text-gray-600">({pct}%)</span></span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-brand rounded-full" style={{width:`${pct}%`,transition:'width .4s ease'}}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {Object.keys(byMethod).length === 0 && (
+            <p className="text-sm text-gray-600 text-center py-4">Sin cobros en este período</p>
+          )}
+        </div>
+
+        {/* Pending payments */}
+        <div className="card p-5">
+          <h2 className="font-semibold text-sm text-gray-300 mb-4 flex items-center gap-2">
+            <i className="fas fa-hourglass-half text-orange-400"></i> Pendientes de cobro
+          </h2>
+          {(() => {
+            const unpaid = bookings.filter(b => b.status==='completed' && (!b.paymentStatus || b.paymentStatus==='unpaid'));
+            return unpaid.length === 0 ? (
+              <div className="text-center py-6">
+                <i className="fas fa-check-circle text-emerald-400 text-2xl mb-2"></i>
+                <p className="text-sm text-gray-500">Todo cobrado</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {unpaid.slice(0,6).map(b => (
+                  <div key={b.id} className="flex items-center gap-2 p-2.5 rounded-xl bg-white/2 hover:bg-white/4 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold truncate">{b.name}</div>
+                      <div className="text-xs text-gray-600 truncate">{b.service}</div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-xs text-gray-400">{fmtDate(b.date)}</div>
+                      {b.priceEstimate && <div className="text-xs text-brand font-bold">{fmtMoney(b.priceEstimate)}</div>}
+                    </div>
+                  </div>
+                ))}
+                {unpaid.length > 6 && <p className="text-xs text-gray-600 text-center pt-1">+{unpaid.length-6} más</p>}
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+
+      {/* History table */}
+      <div className="card overflow-hidden">
+        <div className="p-4 border-b border-[#1e1e1e] flex items-center gap-3 flex-wrap">
+          <h2 className="font-semibold text-sm text-gray-300 flex items-center gap-2 mr-auto">
+            <i className="fas fa-receipt text-brand"></i> Historial de cobros
+            <span className="text-xs text-gray-600 font-normal">({paid.length} total)</span>
+          </h2>
+          <div className="relative">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs"></i>
+            <input className="input pl-8 text-sm py-2" style={{width:180}} placeholder="Buscar..." value={search} onChange={e=>setSearch(e.target.value)} />
+          </div>
+          <select className="input text-sm py-2" style={{width:160}} value={methodFilter} onChange={e=>setMethodFilter(e.target.value)}>
+            <option value="all">Todos los métodos</option>
+            {PAYMENT_METHODS.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+        {history.length === 0 ? (
+          <EmptyState icon="fa-receipt" title="Sin cobros registrados" desc="Los cobros aparecerán aquí al finalizar turnos." />
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Cliente</th>
+                  <th className="hidden sm:table-cell">Servicio</th>
+                  <th>Monto</th>
+                  <th className="hidden md:table-cell">Método</th>
+                  <th>Estado pago</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map(b => (
+                  <tr key={b.id}>
+                    <td className="text-sm text-gray-400 tabular-nums whitespace-nowrap">
+                      {fmtDate((b.paymentDate||b.date||'').slice(0,10))}
+                    </td>
+                    <td>
+                      <div className="text-sm font-medium">{b.name}</div>
+                      {b.vehicle && <div className="text-xs text-gray-600">{b.vehicle}</div>}
+                    </td>
+                    <td className="hidden sm:table-cell text-sm text-gray-400">{b.service}</td>
+                    <td>
+                      <div className="text-sm font-bold text-emerald-400 tabular-nums">{fmtMoney(b.paymentAmount)}</div>
+                      {b.priceEstimate && b.paymentAmount != null && Number(b.priceEstimate) !== Number(b.paymentAmount) && (
+                        <div className="text-xs text-gray-600">presup. {fmtMoney(b.priceEstimate)}</div>
+                      )}
+                    </td>
+                    <td className="hidden md:table-cell">
+                      {b.paymentMethod && (
+                        <span className="text-xs text-gray-400 flex items-center gap-1.5">
+                          <i className={`fas ${methodIcons[b.paymentMethod]||'fa-circle-dot'} text-gray-600`}></i>
+                          {b.paymentMethod}
+                        </span>
+                      )}
+                    </td>
+                    <td><PaymentBadge status={b.paymentStatus||'unpaid'} /></td>
+                    <td>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>setEditPayment(b)}>
+                        <i className="fas fa-pencil text-xs"></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {editPayment && <PaymentModal turno={editPayment} onClose={()=>setEditPayment(null)} onSave={savePaymentEdit} />}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
 //  SIDEBAR
 // ═══════════════════════════════════════════
 const NAV = [
-  {id:'dashboard', icon:'fa-gauge', label:'Dashboard'},
+  {id:'dashboard', icon:'fa-gauge',          label:'Dashboard'},
   {id:'turnos',    icon:'fa-calendar-check', label:'Turnos'},
-  {id:'clientes',  icon:'fa-users', label:'Clientes'},
-  {id:'servicios', icon:'fa-wrench', label:'Servicios'},
-  {id:'galeria',   icon:'fa-images', label:'Galería'},
-  {id:'testimonios',icon:'fa-star', label:'Testimonios'},
-  {id:'packs',     icon:'fa-box-open', label:'Packs'},
-  {id:'config',    icon:'fa-sliders', label:'Configuración'},
+  {id:'caja',      icon:'fa-dollar-sign',    label:'Caja'},
+  {id:'clientes',  icon:'fa-users',          label:'Clientes'},
+  {id:'servicios', icon:'fa-wrench',         label:'Servicios'},
+  {id:'galeria',   icon:'fa-images',         label:'Galería'},
+  {id:'testimonios',icon:'fa-star',          label:'Testimonios'},
+  {id:'packs',     icon:'fa-box-open',       label:'Packs'},
+  {id:'config',    icon:'fa-sliders',        label:'Configuración'},
 ];
 
 function Sidebar({page, setPage, onClose, pendingCount}) {
@@ -1525,14 +1955,15 @@ function App() {
   if (!auth) return <LoginPage onLogin={login} />;
 
   const pages = {
-    dashboard: <Dashboard bookings={bookings} clients={clients} services={services} />,
-    turnos:    <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} />,
-    clientes:  <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
-    servicios: <ServiciosPage services={services} setServices={setServices} />,
-    galeria:   <GaleriaPage />,
+    dashboard:  <Dashboard bookings={bookings} clients={clients} services={services} />,
+    turnos:     <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} />,
+    caja:       <CajaPage bookings={bookings} setBookings={setBookings} />,
+    clientes:   <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
+    servicios:  <ServiciosPage services={services} setServices={setServices} />,
+    galeria:    <GaleriaPage />,
     testimonios:<TestimoniosPage />,
-    packs:     <PacksPage />,
-    config:    <ConfigPage />,
+    packs:      <PacksPage />,
+    config:     <ConfigPage />,
   };
 
   return (
