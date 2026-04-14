@@ -10,6 +10,13 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    const _db = (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined')
+      ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -82,6 +89,48 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const load = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } };
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const today = () => new Date().toISOString().slice(0, 10);
+
+// ─── Supabase transform helpers ───────────────────────────────────────────────
+// JS camelCase ↔ DB snake_case
+const toDb = b => ({
+  id:             b.id,
+  service:        b.service        || null,
+  date:           b.date           || null,
+  time:           b.time           || null,
+  name:           b.name           || null,
+  phone:          b.phone          || null,
+  vehicle:        b.vehicle        || null,
+  email:          b.email          || null,
+  status:         b.status         || 'pending',
+  notes:          b.notes          || null,
+  payment_status: b.paymentStatus  || null,
+  payment_amount: b.paymentAmount  != null ? Number(b.paymentAmount) : null,
+  payment_method: b.paymentMethod  || null,
+  payment_notes:  b.paymentNotes   || null,
+  price_estimate: b.priceEstimate  != null ? Number(b.priceEstimate) : null,
+  payment_date:   b.paymentDate    || null,
+  created_at:     b.createdAt      || new Date().toISOString(),
+});
+const toDbUpdate = b => { const {id: _i, created_at: _c, ...rest} = toDb(b); return rest; };
+const fromDb = r => ({
+  id:            r.id,
+  service:       r.service,
+  date:          r.date,
+  time:          r.time,
+  name:          r.name,
+  phone:         r.phone,
+  vehicle:       r.vehicle,
+  email:         r.email,
+  status:        r.status || 'pending',
+  notes:         r.notes,
+  paymentStatus: r.payment_status,
+  paymentAmount: r.payment_amount,
+  paymentMethod: r.payment_method,
+  paymentNotes:  r.payment_notes,
+  priceEstimate: r.price_estimate,
+  paymentDate:   r.payment_date,
+  createdAt:     r.created_at,
+});
 const fmtDate = d => { if (!d) return '—'; const [y,m,dy] = d.split('-'); return `${dy}/${m}/${y}`; };
 const fmtDateLong = d => { if (!d) return '—'; const dt = new Date(d+'T12:00:00'); return dt.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); };
 
@@ -734,38 +783,50 @@ function TurnosPage({bookings, setBookings, services, config, clients, setClient
     .filter(b => !search || b.name?.toLowerCase().includes(search.toLowerCase()) || b.phone?.includes(search) || b.vehicle?.toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => (a.date+a.time) > (b.date+b.time) ? -1 : 1);
 
-  const saveTurno = (t) => {
-    setBookings(prev => {
-      const exists = prev.find(b=>b.id===t.id);
-      const next = exists ? prev.map(b=>b.id===t.id?t:b) : [t,...prev];
-      save('morrey_bookings', next);
-      return next;
-    });
-    toast(t.id&&bookings.find(b=>b.id===t.id) ? 'Turno actualizado' : 'Turno creado', 'success');
+  const saveTurno = async (t) => {
+    const isEdit = !!bookings.find(b => b.id === t.id);
+    if (isEdit) {
+      const { error } = await _db.from('bookings').update(toDbUpdate(t)).eq('id', t.id);
+      if (error) { toast('Error al guardar el turno', 'error'); return; }
+      setBookings(prev => prev.map(b => b.id === t.id ? t : b));
+      toast('Turno actualizado', 'success');
+    } else {
+      const { error } = await _db.from('bookings').insert(toDb(t));
+      if (error) { toast('Error al crear el turno', 'error'); return; }
+      setBookings(prev => [t, ...prev]);
+      toast('Turno creado', 'success');
+    }
     setModal(null);
   };
 
   const deleteTurno = (id) => {
-    confirm('¿Eliminar este turno? Esta acción no se puede deshacer.', () => {
-      setBookings(prev => { const n=prev.filter(b=>b.id!==id); save('morrey_bookings',n); return n; });
+    confirm('¿Eliminar este turno? Esta acción no se puede deshacer.', async () => {
+      const { error } = await _db.from('bookings').delete().eq('id', id);
+      if (error) { toast('Error al eliminar', 'error'); return; }
+      setBookings(prev => prev.filter(b => b.id !== id));
       toast('Turno eliminado', 'info');
     });
   };
 
-  const changeStatus = (id, status) => {
+  const changeStatus = async (id, status) => {
     if (status === 'completed') {
       const turno = bookings.find(b => b.id === id);
-      // Update status first, then open payment modal
-      setBookings(prev => { const n=prev.map(b=>b.id===id?{...b,status}:b); save('morrey_bookings',n); return n; });
-      setPaymentModal({...turno, status:'completed'});
+      const { error } = await _db.from('bookings').update({status}).eq('id', id);
+      if (error) { toast('Error al actualizar estado', 'error'); return; }
+      setBookings(prev => prev.map(b => b.id === id ? {...b, status} : b));
+      setPaymentModal({...turno, status: 'completed'});
       return;
     }
-    setBookings(prev => { const n=prev.map(b=>b.id===id?{...b,status}:b); save('morrey_bookings',n); return n; });
+    const { error } = await _db.from('bookings').update({status}).eq('id', id);
+    if (error) { toast('Error al actualizar estado', 'error'); return; }
+    setBookings(prev => prev.map(b => b.id === id ? {...b, status} : b));
     toast(`Estado actualizado a "${STATUS[status].label}"`, 'success');
   };
 
-  const savePayment = (updated) => {
-    setBookings(prev => { const n=prev.map(b=>b.id===updated.id?updated:b); save('morrey_bookings',n); return n; });
+  const savePayment = async (updated) => {
+    const { error } = await _db.from('bookings').update(toDbUpdate(updated)).eq('id', updated.id);
+    if (error) { toast('Error al guardar cobro', 'error'); return; }
+    setBookings(prev => prev.map(b => b.id === updated.id ? updated : b));
     setPaymentModal(null);
     const ps = updated.paymentStatus;
     toast(ps==='paid' ? '¡Cobro registrado!' : ps==='partial' ? 'Pago parcial registrado' : 'Turno finalizado sin cobro', ps==='paid'?'success':'info');
@@ -1850,8 +1911,12 @@ function ConfigPage() {
       <div className="card p-6 border-red-500/20">
         <h2 className="font-semibold flex items-center gap-2 text-red-400 mb-4"><i className="fas fa-exclamation-triangle"></i> Zona peligrosa</h2>
         <div className="flex flex-wrap gap-3">
-          <button className="btn btn-red btn-sm" onClick={()=>{
-            if(confirm('¿Eliminar TODOS los turnos?')) { save('morrey_bookings',[]); toast('Todos los turnos eliminados','warning'); }
+          <button className="btn btn-red btn-sm" onClick={async ()=>{
+            if(confirm('¿Eliminar TODOS los turnos? Esta acción no se puede deshacer.')) {
+              const { error } = await _db.from('bookings').delete().not('id', 'is', null);
+              if (error) { toast('Error al borrar', 'error'); return; }
+              toast('Todos los turnos eliminados','warning');
+            }
           }}><i className="fas fa-trash"></i> Borrar todos los turnos</button>
           <button className="btn btn-ghost btn-sm" onClick={()=>window.location.href='index.html'}>
             <i className="fas fa-home"></i> Ver sitio principal
@@ -1913,8 +1978,10 @@ function CajaPage({bookings, setBookings}) {
     .filter(b => !search || b.name?.toLowerCase().includes(search.toLowerCase()) || b.service?.toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => (b.paymentDate||b.date||'') > (a.paymentDate||a.date||'') ? 1 : -1);
 
-  const savePaymentEdit = (updated) => {
-    setBookings(prev => { const n=prev.map(b=>b.id===updated.id?updated:b); save('morrey_bookings',n); return n; });
+  const savePaymentEdit = async (updated) => {
+    const { error } = await _db.from('bookings').update(toDbUpdate(updated)).eq('id', updated.id);
+    if (error) { toast('Error al actualizar cobro', 'error'); return; }
+    setBookings(prev => prev.map(b => b.id === updated.id ? updated : b));
     setEditPayment(null);
     toast('Cobro actualizado', 'success');
   };
@@ -2422,7 +2489,9 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Global state
-  const [bookings,     setBookings]     = useState(() => load('morrey_bookings', []));
+  const [bookings,     setBookings]     = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
+  const toast = useToast();
   const [clients,      setClients]      = useState(() => load('morrey_clients', []));
   const [testimonials, setTestimonials] = useState(() => {
     const saved = load('morrey_testimonials', null);
@@ -2443,18 +2512,27 @@ function App() {
   });
   const config = {...DEFAULT_CONFIG, ...load('morrey_config', {})};
 
-  // Notification sound on new pending booking
-  const prevBookingsLen = useRef(bookings.length);
+  // Cargar turnos desde Supabase + Realtime para detectar nuevos del sitio público
   useEffect(() => {
-    const interval = setInterval(() => {
-      const fresh = load('morrey_bookings', []);
-      if (fresh.length > prevBookingsLen.current) {
-        prevBookingsLen.current = fresh.length;
-        setBookings(fresh);
-        try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play().catch(()=>{}); } catch {}
-      }
-    }, 10000);
-    return () => clearInterval(interval);
+    if (!_db) { setBookingsLoading(false); return; }
+
+    // Carga inicial
+    _db.from('bookings').select('*').order('created_at', {ascending: false})
+      .then(({data, error}) => {
+        if (data) setBookings(data.map(fromDb));
+        if (error) toast('Error al cargar turnos desde Supabase', 'error');
+        setBookingsLoading(false);
+      });
+
+    // Suscripción Realtime: nuevo turno del sitio público
+    const channel = _db.channel('bookings-realtime')
+      .on('postgres_changes', {event: 'INSERT', schema: 'public', table: 'bookings'}, ({new: row}) => {
+        setBookings(prev => prev.some(b => b.id === row.id) ? prev : [fromDb(row), ...prev]);
+        toast(`Nuevo turno: ${row.name} — ${row.service}`, 'info');
+      })
+      .subscribe();
+
+    return () => _db.removeChannel(channel);
   }, []);
 
   const login = () => { sessionStorage.setItem('morrey_auth','1'); setAuth(true); };
@@ -2499,6 +2577,20 @@ function App() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar page={page} onMenuClick={()=>setSidebarOpen(true)} onLogout={logout} bookings={bookings} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          {!_db && (
+            <div className="mb-4 flex items-start gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/25 text-yellow-300 text-sm">
+              <i className="fas fa-triangle-exclamation flex-shrink-0 mt-0.5"></i>
+              <div>
+                <strong>Supabase no configurado.</strong> Editá <code className="bg-black/30 px-1 rounded">supabase-config.js</code> con tu URL y anon key para activar la base de datos real. Seguí las instrucciones dentro del archivo.
+              </div>
+            </div>
+          )}
+          {bookingsLoading && (
+            <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+              <i className="fas fa-circle-notch fa-spin text-brand"></i>
+              Cargando turnos desde Supabase...
+            </div>
+          )}
           <div className="max-w-5xl mx-auto">
             {pages[page] || pages.dashboard}
           </div>

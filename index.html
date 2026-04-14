@@ -38,6 +38,15 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    const _db = (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined')
+      ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+  </script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -115,6 +124,8 @@
     /* =============================================
        CONSTANTS
     ============================================= */
+
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
     const PHONE   = '5491156359321';
     const WA_BASE = `https://wa.me/${PHONE}`;
@@ -977,25 +988,48 @@
         setErr(p => ({ ...p, [k]: false }));
       };
 
-      const submit = () => {
+      const [submitting, setSubmitting] = useState(false);
+      const [submitError, setSubmitError] = useState('');
+
+      const submit = async () => {
         const e = {};
         const required = ['service','date','time','name','phone'];
         required.forEach(k => { if (!form[k].trim()) e[k] = true; });
         setErr(e);
         if (Object.keys(e).length) return;
 
-        // Guardar en localStorage para que el admin pueda verlo y responder con WA
-        try {
-          const bookings = JSON.parse(localStorage.getItem('morrey_bookings') || '[]');
-          bookings.push({
-            id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-            ...form,
-            status: 'pending',
-            createdAt: new Date().toISOString()
-          });
-          localStorage.setItem('morrey_bookings', JSON.stringify(bookings));
-        } catch(_) {}
+        setSubmitting(true);
+        setSubmitError('');
 
+        const booking = {
+          id:         uid(),
+          service:    form.service,
+          date:       form.date,
+          time:       form.time,
+          name:       form.name,
+          phone:      form.phone,
+          vehicle:    form.vehicle || null,
+          status:     'pending',
+          created_at: new Date().toISOString(),
+        };
+
+        if (_db) {
+          const { error } = await _db.from('bookings').insert(booking);
+          if (error) {
+            setSubmitting(false);
+            setSubmitError('No se pudo registrar el turno. Escribinos por WhatsApp.');
+            return;
+          }
+        } else {
+          // Fallback a localStorage si Supabase no está configurado
+          try {
+            const all = JSON.parse(localStorage.getItem('morrey_bookings') || '[]');
+            all.push({...booking, createdAt: booking.created_at});
+            localStorage.setItem('morrey_bookings', JSON.stringify(all));
+          } catch(_) {}
+        }
+
+        setSubmitting(false);
         setSaved({ ...form });
         setDone(true);
       };
@@ -1151,10 +1185,23 @@
                     </div>
                   </div>
 
-                  <button onClick={submit}
-                    className="w-full py-4 bg-brand hover:bg-brand-dark text-black font-bold text-base rounded-2xl flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand/20 active:translate-y-0">
-                    <i className="fas fa-calendar-check text-lg"></i>
-                    Solicitar turno
+                  {submitError && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      <i className="fas fa-exclamation-circle flex-shrink-0"></i>
+                      {submitError}
+                      <a href={`${WA_BASE}?text=${encodeURIComponent('Hola! Quiero pedir un turno. ¿Qué fechas tienen disponibles?')}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="ml-auto text-[#25D366] font-semibold whitespace-nowrap hover:underline text-xs">
+                        <i className="fab fa-whatsapp mr-1"></i>Escribir
+                      </a>
+                    </div>
+                  )}
+
+                  <button onClick={submit} disabled={submitting}
+                    className="w-full py-4 bg-brand hover:bg-brand-dark text-black font-bold text-base rounded-2xl flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand/20 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed">
+                    {submitting
+                      ? <><i className="fas fa-circle-notch fa-spin text-lg"></i> Enviando...</>
+                      : <><i className="fas fa-calendar-check text-lg"></i> Solicitar turno</>}
                   </button>
 
                   <p className="text-white/20 text-[11px] text-center mt-4 leading-relaxed">
