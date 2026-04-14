@@ -1163,13 +1163,26 @@
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
 
                     {/* Servicio */}
-                    <div>
-                      <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Servicio *</label>
-                      <select value={form.service} onChange={e => upd('service', e.target.value)}
-                        style={{ background:'#0d0d0d' }} className={base('service') + ' cursor-pointer'}>
-                        <option value="">Seleccionar servicio</option>
-                        {SERVICES.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                      </select>
+                    <div className="sm:col-span-2">
+                      <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">
+                        Servicio * <span className="normal-case font-normal text-white/25">— podés elegir más de uno</span>
+                      </label>
+                      <div className={`flex flex-wrap gap-2 p-3 rounded-xl border ${err.service ? 'border-red-500/60' : 'border-white/[.08]'} bg-[#0d0d0d] min-h-[52px]`}>
+                        {SERVICES.map(s => {
+                          const sel = form.service.split(', ').filter(Boolean).includes(s.name);
+                          return (
+                            <button key={s.name} type="button"
+                              onClick={() => {
+                                const parts = form.service.split(', ').filter(Boolean);
+                                const next = sel ? parts.filter(p => p !== s.name) : [...parts, s.name];
+                                upd('service', next.join(', '));
+                              }}
+                              className={`text-xs px-3 py-1.5 rounded-full border transition-all select-none ${sel ? 'bg-[#ffde00] text-black border-[#ffde00] font-semibold' : 'border-white/10 text-white/40 hover:border-white/30 hover:text-white'}`}>
+                              {sel && '✓ '}{s.name}
+                            </button>
+                          );
+                        })}
+                      </div>
                       {err.service && <p className="text-red-400/70 text-[11px] mt-1">{err.service}</p>}
                     </div>
 

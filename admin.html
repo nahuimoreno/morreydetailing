@@ -223,6 +223,32 @@ function ToastProvider({children}) {
 const useToast = () => useContext(ToastCtx);
 
 // ═══════════════════════════════════════════
+//  SERVICE PICKER — multi-selección de servicios
+// ═══════════════════════════════════════════
+function ServicePicker({value, onChange, services, error}) {
+  const parts = (value||'').split(', ').filter(Boolean);
+  const toggle = (name) => {
+    const next = parts.includes(name) ? parts.filter(p => p !== name) : [...parts, name];
+    onChange(next.join(', '));
+  };
+  if (!services || services.length === 0)
+    return <div className="input text-xs text-gray-600 py-3">Sin servicios activos configurados</div>;
+  return (
+    <div className={`flex flex-wrap gap-2 p-3 rounded-xl border ${error?'border-red-500/50':'border-[#2a2a2a]'} bg-black/20 min-h-[48px]`}>
+      {services.map(s => {
+        const sel = parts.includes(s.name);
+        return (
+          <button key={s.id||s.name} type="button" onClick={()=>toggle(s.name)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-all select-none ${sel?'bg-brand text-black border-brand font-semibold':'border-[#333] text-gray-400 hover:border-brand/50 hover:text-white'}`}>
+            {sel && <i className="fas fa-check mr-1 text-[10px]"></i>}{s.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
 //  CONFIRM DIALOG
 // ═══════════════════════════════════════════
 const ConfirmCtx = createContext(null);
@@ -581,11 +607,8 @@ function TurnoModal({turno, onClose, onSave, services, bookings, config}) {
         <FormField label="Vehículo">
           <input className="input" value={form.vehicle} onChange={e=>set('vehicle',e.target.value)} placeholder="Ej: VW Gol 2019 blanco" />
         </FormField>
-        <FormField label="Servicio" required>
-          <select className="input" value={form.service} onChange={e=>set('service',e.target.value)}>
-            <option value="">Seleccionar...</option>
-            {activeServices.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-          </select>
+        <FormField label="Servicio(s)" required className="sm:col-span-2">
+          <ServicePicker value={form.service} onChange={v=>set('service',v)} services={activeServices} />
         </FormField>
         <FormField label="Estado">
           <select className="input" value={form.status} onChange={e=>set('status',e.target.value)}>
@@ -1516,11 +1539,8 @@ function TestimonioModal({t, onClose, onSave, services}) {
           </FormField>
         </div>
         {activeServices.length > 0 && (
-          <FormField label="Servicio realizado">
-            <select className="input" value={form.service} onChange={e=>set('service',e.target.value)}>
-              <option value="">Sin especificar</option>
-              {activeServices.map(s=><option key={s.id} value={s.name}>{s.name}</option>)}
-            </select>
+          <FormField label="Servicio(s) realizado(s)">
+            <ServicePicker value={form.service||''} onChange={v=>set('service',v)} services={activeServices} />
           </FormField>
         )}
         <FormField label="Comentario" required>
@@ -2409,7 +2429,8 @@ const PRESUP_STATUS = {
   converted: {label:'Convertido',color:'bg-brand/20 text-brand'},
 };
 
-function PresupuestosPage({setPage, setBookings, clients}) {
+function PresupuestosPage({setPage, setBookings, clients, services}) {
+  const activeServices = (services||[]).filter(s=>s.active);
   const [items, setItems] = useState(() => load('morrey_presupuestos', []));
   const [modal, setModal] = useState(null); // null | 'new' | {presup}
   const [filter, setFilter] = useState('all');
@@ -2452,7 +2473,7 @@ function PresupuestosPage({setPage, setBookings, clients}) {
   const convertToBooking = (p) => {
     const nb = {
       id: uid(), name: p.clientName, phone: p.clientPhone, vehicle: p.vehicle,
-      service: p.items[0]?.service || '', date:'', time:'', email:'',
+      service: p.items.filter(i=>i.service||i.customService).map(i=>i.service==='__custom__'?i.customService:i.service).join(', ') || '', date:'', time:'', email:'',
       status:'pending', notes: `Convertido desde presupuesto. ${p.notes||''}`,
       priceEstimate: calcTotal(p), createdAt: new Date().toISOString(),
     };
@@ -2464,7 +2485,7 @@ function PresupuestosPage({setPage, setBookings, clients}) {
 
   const sendWA = (p) => {
     const total = calcTotal(p);
-    const itemsTxt = p.items.filter(i=>i.service).map(i=>`• ${i.service}: $${Number(i.price||0).toLocaleString('es-AR')}`).join('\n');
+    const itemsTxt = p.items.filter(i=>i.service&&i.service!=='__custom__'||i.customService).map(i=>`• ${i.service==='__custom__'?i.customService:i.service}: $${Number(i.price||0).toLocaleString('es-AR')}`).join('\n');
     const msg = `Hola ${p.clientName}! 👋\n\nTe paso el presupuesto para tu *${p.vehicle||'vehículo'}*:\n\n${itemsTxt}${p.discount>0?`\nDescuento: -$${Number(p.discount).toLocaleString('es-AR')}`:''}${p.discount>0?`\n*Total: $${total.toLocaleString('es-AR')}`:`\n*Total: $${total.toLocaleString('es-AR')}`}*\n\nVálido por ${p.validDays} días. ¿Lo tomamos? 😊`;
     window.open(`https://wa.me/${p.clientPhone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -2521,11 +2542,13 @@ function PresupuestosPage({setPage, setBookings, clients}) {
                       <span className={`text-xs px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {new Date(p.createdAt).toLocaleDateString('es-AR')} · {p.items.filter(i=>i.service).length} servicio(s) · Válido {p.validDays}d
+                      {new Date(p.createdAt).toLocaleDateString('es-AR')} · {p.items.filter(i=>i.service||i.customService).length} servicio(s) · Válido {p.validDays}d
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {p.items.filter(i=>i.service).map((it,idx) => (
-                        <span key={idx} className="text-xs bg-white/5 px-2 py-0.5 rounded">{it.service} — ${Number(it.price||0).toLocaleString('es-AR')}</span>
+                      {p.items.filter(i=>i.service||i.customService).map((it,idx) => (
+                        <span key={idx} className="text-xs bg-white/5 px-2 py-0.5 rounded">
+                          {it.service==='__custom__'?it.customService:it.service} — ${Number(it.price||0).toLocaleString('es-AR')}
+                        </span>
                       ))}
                     </div>
                     {p.notes && <p className="text-xs text-gray-500 mt-1 italic">"{p.notes}"</p>}
@@ -2593,8 +2616,24 @@ function PresupuestosPage({setPage, setBookings, clients}) {
                 </button>
               </div>
               {form.items.map((it, idx) => (
-                <div key={idx} className="flex gap-2 mb-2">
-                  <input className="input flex-1" value={it.service} onChange={e=>setItem(idx,'service',e.target.value)} placeholder="Servicio" />
+                <div key={idx} className="flex gap-2 mb-2 items-center">
+                  {activeServices.length > 0 ? (
+                    <select className="input flex-1 text-sm" value={it.service}
+                      onChange={e => {
+                        const svc = activeServices.find(s=>s.name===e.target.value);
+                        setItem(idx,'service',e.target.value);
+                        if (svc?.price) setItem(idx,'price',svc.price);
+                      }}>
+                      <option value="">Seleccionar servicio...</option>
+                      {activeServices.map(s=><option key={s.id} value={s.name}>{s.name}</option>)}
+                      <option value="__custom__">Otro (escribir)</option>
+                    </select>
+                  ) : (
+                    <input className="input flex-1" value={it.service} onChange={e=>setItem(idx,'service',e.target.value)} placeholder="Servicio" />
+                  )}
+                  {it.service === '__custom__' && (
+                    <input className="input flex-1" value={it.customService||''} onChange={e=>setItem(idx,'customService',e.target.value)} placeholder="Nombre del servicio" />
+                  )}
                   <input className="input w-28" type="number" value={it.price} onChange={e=>setItem(idx,'price',e.target.value)} placeholder="$" />
                   {form.items.length > 1 && (
                     <button className="text-gray-600 hover:text-red-400 px-1" onClick={()=>setForm(f=>({...f,items:f.items.filter((_,i)=>i!==idx)}))}>
@@ -3285,7 +3324,7 @@ function App() {
     galeria:      <GaleriaPage />,
     testimonios:  <TestimoniosPage items={testimonials} setItems={setTestimonials} services={services} />,
     packs:        <PacksPage />,
-    presupuestos: <PresupuestosPage setPage={setPage} setBookings={setBookings} clients={clients} />,
+    presupuestos: <PresupuestosPage setPage={setPage} setBookings={setBookings} clients={clients} services={services} />,
     plantillas:   <PlantillasPage />,
     mantenimiento:<MantenimientoPage clients={clients} bookings={bookings} />,
     inventario:   <InventarioPage />,
