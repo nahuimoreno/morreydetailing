@@ -2118,18 +2118,203 @@ function CajaPage({bookings, setBookings}) {
 }
 
 // ═══════════════════════════════════════════
+//  CALENDARIO PAGE
+// ═══════════════════════════════════════════
+function CalendarioPage({bookings, setPage}) {
+  const todayStr = today();
+  const [cur, setCur] = useState(() => {
+    const d = new Date(); return {y: d.getFullYear(), m: d.getMonth()};
+  });
+  const [selectedDay, setSelectedDay] = useState(null); // 'YYYY-MM-DD'
+
+  const DAYS_ES  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const prevMonth = () => setCur(p => p.m === 0 ? {y:p.y-1,m:11} : {y:p.y,m:p.m-1});
+  const nextMonth = () => setCur(p => p.m ===11 ? {y:p.y+1,m:0}  : {y:p.y,m:p.m+1});
+  const goToday   = () => { const d=new Date(); setCur({y:d.getFullYear(),m:d.getMonth()}); setSelectedDay(todayStr); };
+
+  // Build calendar grid (42 cells = 6 weeks)
+  const firstDay  = new Date(cur.y, cur.m, 1).getDay();   // 0=Dom
+  const daysInMonth = new Date(cur.y, cur.m+1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const d = i - firstDay + 1;
+    if (d < 1 || d > daysInMonth) { cells.push(null); continue; }
+    const pad = n => String(n).padStart(2,'0');
+    cells.push(`${cur.y}-${pad(cur.m+1)}-${pad(d)}`);
+  }
+  // Remove trailing empty rows
+  while (cells.length > 7 && cells.slice(-7).every(c => c === null)) cells.splice(-7);
+
+  // Bookings grouped by date
+  const byDate = {};
+  bookings.forEach(b => {
+    if (!b.date) return;
+    if (!byDate[b.date]) byDate[b.date] = [];
+    byDate[b.date].push(b);
+  });
+
+  // Status color for a day
+  const dayDot = (dateStr) => {
+    const list = byDate[dateStr] || [];
+    if (!list.length) return null;
+    const active = list.filter(b => b.status !== 'cancelled');
+    if (!active.length) return '#555';
+    if (active.some(b => b.status === 'pending'))     return '#facc15';
+    if (active.some(b => b.status === 'confirmed'))   return '#4ade80';
+    if (active.some(b => b.status === 'in_progress')) return '#60a5fa';
+    if (active.every(b => b.status === 'completed'))  return '#a78bfa';
+    return '#facc15';
+  };
+
+  const selectedBookings = selectedDay ? (byDate[selectedDay] || []) : [];
+
+  return (
+    <div className="fade-in space-y-5">
+      <PageHeader title="Calendario" subtitle="Visualizá tus turnos por día" />
+
+      <div className="card p-5">
+        {/* Month nav */}
+        <div className="flex items-center justify-between mb-5">
+          <button className="btn btn-ghost btn-sm" onClick={prevMonth}><i className="fas fa-chevron-left text-xs"></i></button>
+          <div className="flex items-center gap-3">
+            <h2 className="font-bold text-base">{MONTHS_ES[cur.m]} {cur.y}</h2>
+            <button className="btn btn-ghost btn-sm text-xs" onClick={goToday}>Hoy</button>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={nextMonth}><i className="fas fa-chevron-right text-xs"></i></button>
+        </div>
+
+        {/* Day headers */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:3,marginBottom:3}}>
+          {DAYS_ES.map(d => (
+            <div key={d} style={{textAlign:'center',fontSize:11,fontWeight:600,color:'#555',padding:'4px 0',textTransform:'uppercase',letterSpacing:.5}}>
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:3}}>
+          {cells.map((dateStr, i) => {
+            if (!dateStr) return <div key={i} />;
+            const list   = byDate[dateStr] || [];
+            const active = list.filter(b => b.status !== 'cancelled');
+            const dot    = dayDot(dateStr);
+            const isToday    = dateStr === todayStr;
+            const isSelected = dateStr === selectedDay;
+            const isPast     = dateStr < todayStr;
+            return (
+              <button key={dateStr} onClick={() => setSelectedDay(dateStr === selectedDay ? null : dateStr)}
+                style={{
+                  borderRadius: 10,
+                  padding: '8px 4px',
+                  border: isSelected ? '1px solid rgba(255,222,0,.5)' : isToday ? '1px solid rgba(255,222,0,.25)' : '1px solid transparent',
+                  background: isSelected ? 'rgba(255,222,0,.1)' : isToday ? 'rgba(255,222,0,.05)' : 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                  minHeight: 52,
+                  transition: 'all .12s',
+                }}>
+                <span style={{fontSize:13, fontWeight: isToday?700:400, color: isPast&&!isToday&&!isSelected?'#444':'#ccc'}}>
+                  {Number(dateStr.slice(8))}
+                </span>
+                {active.length > 0 && (
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                    <span style={{width:7,height:7,borderRadius:'50%',background:dot,display:'block',flexShrink:0}}></span>
+                    <span style={{fontSize:9,fontWeight:700,color:dot}}>{active.length}</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Leyenda */}
+        <div style={{display:'flex',gap:16,marginTop:16,flexWrap:'wrap'}}>
+          {[
+            {color:'#facc15',label:'Pendiente'},
+            {color:'#4ade80',label:'Confirmado'},
+            {color:'#60a5fa',label:'En proceso'},
+            {color:'#a78bfa',label:'Finalizado'},
+          ].map(l => (
+            <div key={l.label} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'#555'}}>
+              <span style={{width:7,height:7,borderRadius:'50%',background:l.color,display:'inline-block'}}></span>
+              {l.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Detalle del día seleccionado */}
+      {selectedDay && (
+        <div className="card p-5 fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-sm">
+              {new Date(selectedDay+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})}
+            </h3>
+            {selectedBookings.length === 0 && (
+              <button className="btn btn-brand btn-sm" onClick={() => setPage('turnos')}>
+                <i className="fas fa-plus"></i> Agregar turno
+              </button>
+            )}
+          </div>
+          {selectedBookings.length === 0 ? (
+            <p className="text-sm text-gray-600 text-center py-6">No hay turnos para este día.</p>
+          ) : (
+            <div className="space-y-3">
+              {selectedBookings
+                .sort((a,b) => (a.time||'') > (b.time||'') ? 1 : -1)
+                .map(b => (
+                  <div key={b.id} className={`flex items-start gap-3 p-3 rounded-xl border ${b.status==='cancelled'?'opacity-40':''}`}
+                    style={{background:'#161616',borderColor:'#222'}}>
+                    <div className="flex-shrink-0 mt-0.5">
+                      <span style={{fontSize:12,fontWeight:700,color:'#ffde00',background:'rgba(255,222,0,.1)',border:'1px solid rgba(255,222,0,.2)',borderRadius:7,padding:'3px 8px',display:'block',minWidth:44,textAlign:'center'}}>
+                        {b.time || '—'}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">{b.name}</span>
+                        <StatusBadge status={b.status} />
+                      </div>
+                      <div className="flex gap-3 flex-wrap mt-0.5">
+                        {b.service && <span className="text-xs text-gray-500"><i className="fas fa-wrench mr-1 text-gray-600"></i>{b.service}</span>}
+                        {b.vehicle && <span className="text-xs text-gray-500"><i className="fas fa-car mr-1 text-gray-600"></i>{b.vehicle}</span>}
+                        {b.phone   && <span className="text-xs text-gray-500"><i className="fas fa-phone mr-1 text-gray-600"></i>{b.phone}</span>}
+                      </div>
+                      {b.notes && <p className="text-xs text-gray-600 mt-1 italic">"{b.notes}"</p>}
+                    </div>
+                  </div>
+                ))}
+              <button className="btn btn-ghost btn-sm w-full" onClick={() => setPage('turnos')}>
+                <i className="fas fa-list mr-1"></i> Ver todos los turnos
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
 //  SIDEBAR
 // ═══════════════════════════════════════════
 const NAV = [
-  {id:'dashboard', icon:'fa-gauge',          label:'Dashboard'},
-  {id:'turnos',    icon:'fa-calendar-check', label:'Turnos'},
-  {id:'caja',      icon:'fa-dollar-sign',    label:'Caja'},
-  {id:'clientes',  icon:'fa-users',          label:'Clientes'},
-  {id:'servicios', icon:'fa-wrench',         label:'Servicios'},
-  {id:'galeria',   icon:'fa-images',         label:'Galería'},
-  {id:'testimonios',icon:'fa-star',          label:'Testimonios'},
-  {id:'packs',     icon:'fa-box-open',       label:'Packs'},
-  {id:'config',    icon:'fa-sliders',        label:'Configuración'},
+  {id:'dashboard',   icon:'fa-gauge',          label:'Dashboard'},
+  {id:'calendario',  icon:'fa-calendar-days',  label:'Calendario'},
+  {id:'turnos',      icon:'fa-calendar-check', label:'Turnos'},
+  {id:'caja',        icon:'fa-dollar-sign',    label:'Caja'},
+  {id:'clientes',    icon:'fa-users',          label:'Clientes'},
+  {id:'servicios',   icon:'fa-wrench',         label:'Servicios'},
+  {id:'galeria',     icon:'fa-images',         label:'Galería'},
+  {id:'testimonios', icon:'fa-star',           label:'Testimonios'},
+  {id:'packs',       icon:'fa-box-open',       label:'Packs'},
+  {id:'config',      icon:'fa-sliders',        label:'Configuración'},
 ];
 
 function Sidebar({page, setPage, onClose, pendingCount, pendingTestimonials}) {
@@ -2282,6 +2467,7 @@ function App() {
 
   const pages = {
     dashboard:  <Dashboard bookings={bookings} clients={clients} services={services} />,
+    calendario: <CalendarioPage bookings={bookings} setPage={setPage} />,
     turnos:     <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} clients={clients} setClients={setClients} />,
     caja:       <CajaPage bookings={bookings} setBookings={setBookings} />,
     clientes:   <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
