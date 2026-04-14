@@ -84,6 +84,10 @@
     input[type="date"] { color-scheme: dark; }
     select option { background:#0d0d0d; color:#fff; }
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.6); cursor:pointer; }
+
+    /* Gallery horizontal strip — hide scrollbar */
+    .gallery-strip { scrollbar-width: none; -ms-overflow-style: none; }
+    .gallery-strip::-webkit-scrollbar { display: none; }
   </style>
 </head>
 <body>
@@ -408,47 +412,127 @@
     ============================================= */
 
     function Gallery() {
-      const [showAll, setShowAll] = useState(false);
-      const titleRef = useReveal();
-      const imgs = showAll ? GALLERY : GALLERY.slice(0, 12);
+      const titleRef  = useReveal();
+      const stripRef  = useRef(null);
+      const [lightbox, setLightbox] = useState(null); // null | number index
+
+      // Build image list: built-in filtered by hidden/deleted + uploaded extras
+      const allImgs = (() => {
+        try {
+          const hidden  = JSON.parse(localStorage.getItem('morrey_hidden_gallery')  || '[]');
+          const deleted = JSON.parse(localStorage.getItem('morrey_deleted_gallery') || '[]');
+          const extras  = JSON.parse(localStorage.getItem('morrey_extra_gallery')   || '[]');
+          const builtin = GALLERY
+            .filter(n => !hidden.includes(n) && !deleted.includes(n))
+            .map(n => ({src:n, alt:`Trabajo ${n}`}));
+          const uploaded = extras.map(e => ({src:e.src, alt:e.name}));
+          return [...builtin, ...uploaded];
+        } catch {
+          return GALLERY.map(n => ({src:n, alt:`Trabajo ${n}`}));
+        }
+      })();
+
+      // Lightbox keyboard nav
+      useEffect(() => {
+        if (lightbox === null) return;
+        const fn = e => {
+          if (e.key === 'ArrowRight') setLightbox(i => (i + 1) % allImgs.length);
+          if (e.key === 'ArrowLeft')  setLightbox(i => (i - 1 + allImgs.length) % allImgs.length);
+          if (e.key === 'Escape')     setLightbox(null);
+        };
+        window.addEventListener('keydown', fn);
+        return () => window.removeEventListener('keydown', fn);
+      }, [lightbox]);
+
+      const scrollStrip = dir => {
+        if (stripRef.current) stripRef.current.scrollBy({ left: dir * 280, behavior: 'smooth' });
+      };
 
       return (
-        <section id="galeria" className="py-24 bg-[#0d0d0d] border-y border-white/[.05]">
-          <div className="max-w-6xl mx-auto px-5 md:px-8">
-
-            <div className="text-center mb-14">
-              <div ref={titleRef} className="rv">
-                <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Resultados reales</span>
-                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Galería de Trabajos</h2>
-                <p className="text-white/45 max-w-lg mx-auto text-base">
-                  Cada foto es un resultado real. El trabajo habla por sí solo.
-                </p>
-              </div>
-            </div>
-
-            <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
-              {imgs.map((src, i) => (
-                <div key={i} className="group break-inside-avoid overflow-hidden rounded-xl border border-white/[.06] hover:border-brand/30 transition-all duration-300">
-                  <div className="relative overflow-hidden">
-                    <img src={src} alt={`Trabajo ${i + 1}`} loading="lazy"
-                      className="w-full h-auto block transition-transform duration-500 group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
+        <>
+          <section id="galeria" className="py-24 bg-[#0d0d0d] border-y border-white/[.05]">
+            <div className="max-w-6xl mx-auto px-5 md:px-8">
+              <div className="text-center mb-14">
+                <div ref={titleRef} className="rv">
+                  <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Resultados reales</span>
+                  <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Galería de Trabajos</h2>
+                  <p className="text-white/45 max-w-lg mx-auto text-base">
+                    Cada foto es un resultado real. El trabajo habla por sí solo.
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {!showAll && (
-              <div className="text-center mt-10">
-                <button onClick={() => setShowAll(true)}
-                  className="px-8 py-3.5 border border-brand/35 text-brand font-semibold rounded-xl hover:bg-brand/[.08] transition-all text-sm">
-                  <i className="fas fa-images mr-2"></i>
-                  Ver todas las fotos ({GALLERY.length})
+              {/* Horizontal carousel */}
+              <div className="relative">
+                {/* Left arrow */}
+                <button onClick={() => scrollStrip(-1)}
+                  style={{position:'absolute',left:-20,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)',transition:'border-color .2s'}}>
+                  <i className="fas fa-chevron-left text-sm"></i>
+                </button>
+
+                {/* Strip */}
+                <div ref={stripRef} className="gallery-strip"
+                  style={{display:'flex',gap:10,overflowX:'auto',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch',padding:'4px 2px'}}>
+                  {allImgs.map((img, i) => (
+                    <div key={i}
+                      style={{flexShrink:0,width:220,height:280,scrollSnapAlign:'start',borderRadius:12,overflow:'hidden',cursor:'pointer',border:'1px solid rgba(255,255,255,.06)',position:'relative'}}
+                      className="group"
+                      onClick={() => setLightbox(i)}>
+                      <img src={img.src} alt={img.alt} loading="lazy"
+                        style={{width:'100%',height:'100%',objectFit:'cover',transition:'transform .5s'}}
+                        className="group-hover:scale-105" />
+                      <div style={{position:'absolute',inset:0,background:'linear-gradient(to top,rgba(0,0,0,.55),transparent)',opacity:0,transition:'opacity .3s',display:'flex',alignItems:'flex-end',justifyContent:'center',paddingBottom:12}}
+                        className="group-hover:opacity-100">
+                        <i className="fas fa-expand text-white/80 text-sm"></i>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Right arrow */}
+                <button onClick={() => scrollStrip(1)}
+                  style={{position:'absolute',right:-20,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)',transition:'border-color .2s'}}>
+                  <i className="fas fa-chevron-right text-sm"></i>
                 </button>
               </div>
-            )}
-          </div>
-        </section>
+
+              <p className="text-center text-white/20 text-xs mt-5">
+                <i className="fas fa-hand-point-left mr-1"></i>
+                Deslizá para ver más fotos — hacé click en cualquiera para ampliar
+              </p>
+            </div>
+          </section>
+
+          {/* Lightbox */}
+          {lightbox !== null && (
+            <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.96)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}}
+              onClick={() => setLightbox(null)}>
+              {/* Prev */}
+              <button onClick={e=>{e.stopPropagation();setLightbox(i=>(i-1+allImgs.length)%allImgs.length)}}
+                style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',background:'rgba(255,255,255,.12)',border:'1px solid rgba(255,255,255,.15)',color:'#fff',width:50,height:50,borderRadius:25,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)'}}>
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              {/* Image */}
+              <img src={allImgs[lightbox].src} alt=""
+                style={{maxWidth:'88vw',maxHeight:'88vh',objectFit:'contain',borderRadius:10,boxShadow:'0 24px 80px rgba(0,0,0,.8)'}}
+                onClick={e=>e.stopPropagation()} />
+              {/* Next */}
+              <button onClick={e=>{e.stopPropagation();setLightbox(i=>(i+1)%allImgs.length)}}
+                style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'rgba(255,255,255,.12)',border:'1px solid rgba(255,255,255,.15)',color:'#fff',width:50,height:50,borderRadius:25,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)'}}>
+                <i className="fas fa-chevron-right"></i>
+              </button>
+              {/* Close */}
+              <button onClick={()=>setLightbox(null)}
+                style={{position:'absolute',top:14,right:14,background:'rgba(255,255,255,.12)',border:'1px solid rgba(255,255,255,.15)',color:'#fff',width:40,height:40,borderRadius:20,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)'}}>
+                <i className="fas fa-times"></i>
+              </button>
+              {/* Counter */}
+              <div style={{position:'absolute',bottom:18,left:'50%',transform:'translateX(-50%)',color:'rgba(255,255,255,.4)',fontSize:12,letterSpacing:1}}>
+                {lightbox + 1} / {allImgs.length}
+              </div>
+            </div>
+          )}
+        </>
       );
     }
 
@@ -679,11 +763,17 @@
 
     function Testimonials() {
       const titleRef = useReveal();
+      const ctaRef   = useReveal(200);
+      const stripRef = useRef(null);
       const [dynItems]  = useState(() => getPublishedTestimonials());
       const [showForm,  setShowForm]  = useState(false);
       const [submitted, setSubmitted] = useState(false);
 
       const items = dynItems || TESTIMONIALS;
+
+      const scrollStrip = dir => {
+        if (stripRef.current) stripRef.current.scrollBy({ left: dir * 320, behavior: 'smooth' });
+      };
 
       return (
         <>
@@ -695,13 +785,35 @@
                   <h2 className="text-4xl md:text-5xl font-black mt-3">Testimonios</h2>
                 </div>
               </div>
-              <div className="grid md:grid-cols-3 gap-5">
-                {items.map((t, i) => <TestCard key={t.id||i} t={t} delay={i * 90} />)}
+
+              {/* Carrusel horizontal */}
+              <div style={{position:'relative'}}>
+                {/* Flecha izquierda */}
+                <button onClick={() => scrollStrip(-1)}
+                  style={{position:'absolute',left:-22,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)'}}>
+                  <i className="fas fa-chevron-left text-sm"></i>
+                </button>
+
+                <div ref={stripRef} className="gallery-strip"
+                  style={{display:'flex',gap:16,overflowX:'auto',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch',padding:'4px 2px 16px'}}>
+                  {items.map((t, i) => (
+                    <div key={t.id||i}
+                      style={{flexShrink:0,width:300,scrollSnapAlign:'start'}}>
+                      <TestCard t={t} delay={0} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Flecha derecha */}
+                <button onClick={() => scrollStrip(1)}
+                  style={{position:'absolute',right:-22,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)'}}>
+                  <i className="fas fa-chevron-right text-sm"></i>
+                </button>
               </div>
               {/* CTA para dejar reseña */}
               {!submitted && (
                 <div className="text-center mt-12">
-                  <div ref={useReveal()} className="rv">
+                  <div ref={ctaRef} className="rv">
                     <p className="text-white/40 text-sm mb-4">¿Ya pasaste por Morrey Detailing? Contanos tu experiencia.</p>
                     <button onClick={()=>setShowForm(p=>!p)}
                       className="inline-flex items-center gap-2 border border-brand/30 text-brand hover:bg-brand hover:text-black transition-all px-6 py-3 rounded-xl font-semibold text-sm">
@@ -720,7 +832,11 @@
               )}
             </div>
           </section>
-          {showForm && !submitted && <TestimonialForm onSuccess={()=>{ setSubmitted(true); setShowForm(false); }} />}
+          {showForm && !submitted && <TestimonialForm onSuccess={()=>{
+            setSubmitted(true);
+            setShowForm(false);
+            setTimeout(() => document.getElementById('testimonios')?.scrollIntoView({ behavior:'smooth', block:'center' }), 80);
+          }} />}
         </>
       );
     }

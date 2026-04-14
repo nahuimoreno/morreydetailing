@@ -689,7 +689,7 @@ function PaymentModal({turno, onClose, onSave}) {
 // ═══════════════════════════════════════════
 //  TURNOS PAGE
 // ═══════════════════════════════════════════
-function TurnosPage({bookings, setBookings, services, config}) {
+function TurnosPage({bookings, setBookings, services, config, clients, setClients}) {
   const [filter, setFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -697,6 +697,36 @@ function TurnosPage({bookings, setBookings, services, config}) {
   const [paymentModal, setPaymentModal] = useState(null); // null | turno
   const toast = useToast();
   const confirm = useConfirm();
+
+  // Verifica si el booking ya existe como cliente (por teléfono o por nombre exacto)
+  const isNewClient = b => {
+    if (!clients || clients.length === 0) return true;
+    const phone = (b.phone||'').replace(/\D/g,'');
+    const name  = (b.name||'').trim().toLowerCase();
+    return !clients.some(c => {
+      const cp = (c.phone||'').replace(/\D/g,'');
+      const cn = (c.name||'').trim().toLowerCase();
+      return (phone && cp && phone === cp) || (name && cn && name === cn);
+    });
+  };
+
+  const addClientFromBooking = b => {
+    const newClient = {
+      id: uid(),
+      name:    b.name    || '',
+      phone:   b.phone   || '',
+      email:   b.email   || '',
+      vehicle: b.vehicle || '',
+      isVIP:   false,
+      createdAt: new Date().toISOString(),
+    };
+    setClients(prev => {
+      const n = [newClient, ...prev];
+      save('morrey_clients', n);
+      return n;
+    });
+    toast(`${b.name} agregado como cliente`, 'success');
+  };
 
   const filtered = bookings
     .filter(b => filter==='all' || b.status===filter)
@@ -852,6 +882,14 @@ function TurnosPage({bookings, setBookings, services, config}) {
                 {b.status==='completed' && b.paymentStatus && b.paymentStatus!=='unpaid' && (
                   <button className="btn btn-ghost btn-sm" onClick={()=>setPaymentModal(b)} title="Editar cobro">
                     <i className="fas fa-receipt"></i>
+                  </button>
+                )}
+                {isNewClient(b) && b.name && (
+                  <button className="btn btn-sm" title="Agregar como cliente"
+                    style={{background:'rgba(59,130,246,.15)',color:'#60a5fa',border:'1px solid rgba(59,130,246,.3)'}}
+                    onClick={() => addClientFromBooking(b)}>
+                    <i className="fas fa-user-plus"></i>
+                    <span className="hidden sm:inline">Agregar cliente</span>
                   </button>
                 )}
                 <button className="btn btn-ghost btn-sm ml-auto" onClick={()=>setModal(b)}>
@@ -1183,19 +1221,28 @@ function ServiciosPage({services, setServices}) {
 //  GALERÍA PAGE
 // ═══════════════════════════════════════════
 function GaleriaPage() {
-  const [hidden, setHidden] = useState(() => load('morrey_hidden_gallery', []));
-  const [extras, setExtras] = useState(() => load('morrey_extra_gallery', []));
+  const [hidden,   setHidden]   = useState(() => load('morrey_hidden_gallery', []));
+  const [extras,   setExtras]   = useState(() => load('morrey_extra_gallery', []));
   const [featured, setFeatured] = useState(() => load('morrey_featured_gallery', []));
+  const [deleted,  setDeleted]  = useState(() => load('morrey_deleted_gallery', []));
+  const [imgErr,   setImgErr]   = useState({}); // name → 'retry' | 'failed'
   const fileRef = useRef();
-  const toast = useToast();
+  const toast   = useToast();
   const confirm = useConfirm();
 
-  const builtIn = Array.from({length:34}, (_,i) => `${i+1}.jpg`);
+  // Build filtered list of built-in images (not deleted)
+  const builtIn = Array.from({length:34}, (_,i) => `${i+1}.jpg`).filter(n => !deleted.includes(n));
+
+  const resolvedSrc = name => imgErr[name] === 'failed' ? null : name;
+
+  const handleImgError = name => {
+    setImgErr(p => ({...p, [name]: 'failed'}));
+  };
 
   const toggleHidden = name => {
     const n = hidden.includes(name) ? hidden.filter(h=>h!==name) : [...hidden, name];
     setHidden(n); save('morrey_hidden_gallery', n);
-    toast(hidden.includes(name) ? 'Imagen visible' : 'Imagen oculta', 'info');
+    toast(hidden.includes(name) ? 'Imagen visible en el sitio' : 'Imagen oculta en el sitio', 'info');
   };
 
   const toggleFeatured = name => {
@@ -1203,8 +1250,20 @@ function GaleriaPage() {
     setFeatured(n); save('morrey_featured_gallery', n);
   };
 
+  const deleteBuiltIn = name => {
+    confirm('¿Quitar esta foto de la galería del admin? El archivo físico no se borra.', () => {
+      const nd = [...deleted, name];
+      const nh = hidden.filter(h=>h!==name);
+      const nf = featured.filter(f=>f!==name);
+      setDeleted(nd); save('morrey_deleted_gallery', nd);
+      setHidden(nh);  save('morrey_hidden_gallery', nh);
+      setFeatured(nf);save('morrey_featured_gallery', nf);
+      toast('Foto quitada de la galería', 'info');
+    });
+  };
+
   const deleteExtra = id => {
-    confirm('¿Eliminar esta imagen?', () => {
+    confirm('¿Eliminar esta imagen subida?', () => {
       const n = extras.filter(e=>e.id!==id);
       setExtras(n); save('morrey_extra_gallery', n);
       toast('Imagen eliminada', 'info');
@@ -1214,70 +1273,103 @@ function GaleriaPage() {
   const upload = e => {
     const files = Array.from(e.target.files);
     files.forEach(f => {
+      if (!f.type.startsWith('image/')) return;
+      if (f.size > 8*1024*1024) { toast(`${f.name} supera 8MB`, 'error'); return; }
       const reader = new FileReader();
       reader.onload = ev => {
         const item = {id:uid(), src:ev.target.result, name:f.name, addedAt:new Date().toISOString()};
         setExtras(prev => { const n=[...prev,item]; save('morrey_extra_gallery',n); return n; });
-        toast('Imagen subida', 'success');
+        toast('Foto subida — aparecerá en la galería del sitio', 'success');
       };
       reader.readAsDataURL(f);
     });
     e.target.value = '';
   };
 
+  const visibleBuiltIn = builtIn.filter(n => !hidden.includes(n)).length;
+  const totalVisible   = visibleBuiltIn + extras.length;
+
+  // Reusable cell for built-in images
+  const BuiltInCell = ({name}) => {
+    const isH = hidden.includes(name);
+    const src = resolvedSrc(name);
+    return (
+      <div style={{background:'#161616', borderRadius:12, overflow:'hidden', border:'1px solid #222'}}>
+        {/* Image */}
+        <div style={{aspectRatio:'1/1', background:'#181818', position:'relative'}}>
+          {!src ? (
+            <div style={{width:'100%',height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,opacity:0.4}}>
+              <i className="fas fa-image" style={{color:'#555',fontSize:22}}></i>
+              <span style={{color:'#555',fontSize:10,textAlign:'center',padding:'0 4px'}}>{name}</span>
+            </div>
+          ) : (
+            <img src={src} alt={name} style={{width:'100%',height:'100%',objectFit:'cover',display:'block',opacity:isH?0.35:1}}
+              onError={() => handleImgError(name)} />
+          )}
+          {isH && (
+            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+              <span style={{fontSize:9,background:'rgba(0,0,0,.75)',color:'#888',padding:'2px 6px',borderRadius:4}}>oculta</span>
+            </div>
+          )}
+        </div>
+        {/* Buttons always visible */}
+        <div style={{display:'flex',gap:4,padding:'5px 6px',background:'#111'}}>
+          <button onClick={()=>toggleHidden(name)}
+            style={{flex:1,fontSize:10,padding:'4px 0',borderRadius:6,fontWeight:600,cursor:'pointer',border:'none',
+              background:isH?'rgba(255,222,0,.2)':'rgba(255,255,255,.07)',color:isH?'#ffde00':'#aaa'}}>
+            {isH ? 'Mostrar' : 'Ocultar'}
+          </button>
+          <button onClick={()=>deleteBuiltIn(name)}
+            style={{flex:1,fontSize:10,padding:'4px 0',borderRadius:6,fontWeight:600,cursor:'pointer',border:'none',
+              background:'rgba(239,68,68,.12)',color:'#ef4444'}}>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="fade-in space-y-5">
-      <PageHeader title="Galería" subtitle={`${builtIn.length - hidden.length} visibles · ${extras.length} subidas`}
+      <PageHeader title="Galería" subtitle={`${totalVisible} fotos visibles en el sitio`}
         action={<><input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={upload} /><button className="btn btn-brand" onClick={()=>fileRef.current.click()}><i className="fas fa-upload"></i><span className="hidden sm:inline">Subir fotos</span></button></>} />
 
+      <div className="card p-3 flex items-start gap-2 text-xs text-gray-500">
+        <i className="fas fa-circle-info text-blue-400 mt-0.5 flex-shrink-0"></i>
+        <span>Las fotos que subas aparecen en la galería del sitio. Podés <strong className="text-gray-400">ocultar</strong> una foto (queda en el admin pero no en el sitio) o <strong className="text-gray-400">eliminarla</strong> (desaparece del admin).</span>
+      </div>
+
       {extras.length > 0 && (
-        <div>
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Fotos subidas ({extras.length})</h2>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {extras.map(img => (
-              <div key={img.id} className="relative group">
-                <img src={img.src} alt={img.name} className="img-thumb" />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
-                  <button onClick={()=>deleteExtra(img.id)} className="w-7 h-7 rounded-lg bg-red-500 text-white flex items-center justify-center">
-                    <i className="fas fa-trash text-xs"></i>
-                  </button>
+        <>
+          <div>
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Fotos subidas por vos ({extras.length})</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {extras.map(img => (
+                <div key={img.id} style={{background:'#161616',borderRadius:12,overflow:'hidden',border:'1px solid #222'}}>
+                  <div style={{aspectRatio:'1/1',background:'#181818',position:'relative'}}>
+                    <img src={img.src} alt={img.name} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />
+                    <span style={{position:'absolute',top:3,right:3,fontSize:9,background:'#ffde00',color:'#000',padding:'1px 5px',borderRadius:4,fontWeight:700,pointerEvents:'none'}}>Nueva</span>
+                  </div>
+                  <div style={{padding:'5px 6px',background:'#111'}}>
+                    <button onClick={()=>deleteExtra(img.id)}
+                      style={{width:'100%',fontSize:10,padding:'4px 0',borderRadius:6,fontWeight:600,cursor:'pointer',border:'none',background:'rgba(239,68,68,.12)',color:'#ef4444'}}>
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
-                <span className="absolute top-1 right-1 text-xs bg-brand text-black px-1.5 py-0.5 rounded font-bold">Nueva</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <div className="divider my-5"></div>
-        </div>
+          <div className="divider"></div>
+        </>
       )}
 
       <div>
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Fotos del sitio ({builtIn.length})</h2>
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          Fotos del sitio ({builtIn.length}{hidden.filter(n=>builtIn.includes(n)).length > 0 ? ` · ${hidden.filter(n=>builtIn.includes(n)).length} ocultas` : ''})
+        </h2>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-          {builtIn.map(name => {
-            const isHidden = hidden.includes(name);
-            const isFeat = featured.includes(name);
-            return (
-              <div key={name} className={`relative group ${isHidden?'opacity-30':''}`} style={{background:'#181818',borderRadius:9,overflow:'hidden',aspectRatio:'1/1'}}>
-                <img src={`Images/${name}`} alt={name} className="img-thumb"
-                  onError={e=>{e.target.onerror=null;e.target.style.opacity='0.05';e.target.nextElementSibling.style.display='flex';}} />
-                <div className="absolute inset-0 hidden items-center justify-center flex-col gap-1 pointer-events-none">
-                  <i className="fas fa-image text-gray-700 text-xl"></i>
-                  <span className="text-gray-700 text-xs">{name}</span>
-                </div>
-                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex flex-col items-center justify-center gap-1.5 p-1">
-                  <button onClick={()=>toggleHidden(name)}
-                    className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${isHidden?'bg-brand text-black':'bg-white/10 text-white'}`}>
-                    {isHidden ? 'Mostrar' : 'Ocultar'}
-                  </button>
-                  <button onClick={()=>toggleFeatured(name)}
-                    className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${isFeat?'bg-yellow-400 text-black':'bg-white/10 text-white'}`}>
-                    {isFeat ? '⭐ Dest.' : 'Destacar'}
-                  </button>
-                </div>
-                {isFeat && <span className="absolute top-1 left-1 text-xs">⭐</span>}
-              </div>
-            );
-          })}
+          {builtIn.map(name => <BuiltInCell key={name} name={name} />)}
         </div>
       </div>
     </div>
@@ -1415,15 +1507,15 @@ function TestimoniosPage({items, setItems, services}) {
       return t.status === filter;
     })
     .sort((a,b) => {
-      if (a.featured && !b.featured) return -1;
-      if (!a.featured && b.featured) return 1;
+      // Más recientes primero
       return (b.createdAt||'') > (a.createdAt||'') ? 1 : -1;
     });
 
   const saveItem = t => {
     setItems(prev => {
       const exists = prev.find(x=>x.id===t.id);
-      const n = exists ? prev.map(x=>x.id===t.id?t:x) : [t,...prev];
+      // Los nuevos se agregan al FINAL para que los existentes no desaparezcan de la vista
+      const n = exists ? prev.map(x=>x.id===t.id?t:x) : [...prev, t];
       save('morrey_testimonials', n);
       return n;
     });
@@ -1490,7 +1582,7 @@ function TestimoniosPage({items, setItems, services}) {
         <EmptyState icon="fa-star" title="Sin testimonios" desc="No hay testimonios en esta categoría."
           action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Agregar</button>} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(270px, 1fr))', gap:16}}>
           {filtered.map(t => {
             const status = t.status || 'pending';
             const isPending = status === 'pending';
@@ -2147,7 +2239,18 @@ function App() {
   // Global state
   const [bookings,     setBookings]     = useState(() => load('morrey_bookings', []));
   const [clients,      setClients]      = useState(() => load('morrey_clients', []));
-  const [testimonials, setTestimonials] = useState(() => load('morrey_testimonials', []));
+  const [testimonials, setTestimonials] = useState(() => {
+    const saved = load('morrey_testimonials', null);
+    if (saved !== null) return saved;
+    // Primera vez: sembrar los testimonios por defecto como publicados
+    const defaults = [
+      { id:uid(), name:'Martín G.',    vehicle:'Toyota Corolla', rating:5, comment:'Llevé el auto bastante deteriorado y quedó impecable. El cerámico que le aplicaron es increíble, el agua se va sola. Profesionalismo total.',                     status:'published', featured:true,  source:'default', createdAt:'2024-01-01T00:00:00.000Z' },
+      { id:uid(), name:'Valentina R.', vehicle:'VW Vento',       rating:5, comment:'La limpieza de tapizados dejó el interior como nuevo. Manchas que parecían imposibles de sacar desaparecieron. Muy recomendable.',                                   status:'published', featured:false, source:'default', createdAt:'2024-01-02T00:00:00.000Z' },
+      { id:uid(), name:'Lucas P.',     vehicle:'Ford Mustang',   rating:5, comment:'El resultado del abrillantado superó todas mis expectativas. Se nota que cuidan cada detalle y que aman lo que hacen. Vuelvo sin dudas.',                          status:'published', featured:false, source:'default', createdAt:'2024-01-03T00:00:00.000Z' },
+    ];
+    save('morrey_testimonials', defaults);
+    return defaults;
+  });
   const [services, setServices] = useState(() => {
     const s = load('morrey_services', null);
     if (!s) { save('morrey_services', DEFAULT_SERVICES); return DEFAULT_SERVICES; }
@@ -2179,7 +2282,7 @@ function App() {
 
   const pages = {
     dashboard:  <Dashboard bookings={bookings} clients={clients} services={services} />,
-    turnos:     <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} />,
+    turnos:     <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} clients={clients} setClients={setClients} />,
     caja:       <CajaPage bookings={bookings} setBookings={setBookings} />,
     clientes:   <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
     servicios:  <ServiciosPage services={services} setServices={setServices} />,
