@@ -13,7 +13,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script>
-    const _db = (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined')
+    const _db = (typeof supabase !== 'undefined' &&
+                 typeof SUPABASE_URL !== 'undefined' &&
+                 !SUPABASE_URL.includes('YOUR-PROJECT'))
       ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
       : null;
   </script>
