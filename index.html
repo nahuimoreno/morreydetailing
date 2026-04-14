@@ -88,6 +88,19 @@
     /* Gallery horizontal strip — hide scrollbar */
     .gallery-strip { scrollbar-width: none; -ms-overflow-style: none; }
     .gallery-strip::-webkit-scrollbar { display: none; }
+
+    /* Ocultar flechas de carrusel en mobile (el swipe nativo es suficiente) */
+    @media (max-width: 640px) {
+      .carousel-arrow { display: none !important; }
+    }
+
+    /* WA float label */
+    .wa-float-label { max-width: 0; overflow: hidden; white-space: nowrap; transition: max-width .3s ease, opacity .3s ease; opacity: 0; }
+    .wa-float-btn:hover .wa-float-label { max-width: 160px; opacity: 1; }
+
+    /* Proceso steps */
+    @keyframes stepPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+    .step-num { animation: stepPulse 3s ease infinite; }
   </style>
 </head>
 <body>
@@ -286,37 +299,47 @@
             <div className="h-anim-1">
               <span className="inline-flex items-center gap-2 text-brand text-[11px] font-semibold tracking-widest uppercase mb-8 border border-brand/25 bg-brand/[.06] px-4 py-2 rounded-full backdrop-blur-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block animate-pulse"></span>
-                Detailing Automotriz Premium
+                Detailing Automotriz · Buenos Aires
               </span>
             </div>
 
             <h1 className="h-anim-2 text-5xl md:text-6xl lg:text-7xl font-black leading-[1.06] mb-6">
-              Llevamos tu vehículo<br />
-              <span className="text-gradient">a su mejor versión</span>
+              El detailing que<br />
+              <span className="text-gradient">realmente transforma</span><br />
+              tu auto
             </h1>
 
-            <p className="h-anim-3 text-white/60 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-              Detailing premium, restauración estética y protección profesional
-              para autos que merecen un cuidado superior.
+            <p className="h-anim-3 text-white/65 text-lg md:text-xl max-w-xl mx-auto mb-3 leading-relaxed">
+              Más de <strong className="text-white/90">500 vehículos tratados</strong> en Buenos Aires.
+              Resultados visibles desde el primer servicio.
+            </p>
+            <p className="h-anim-3 text-white/40 text-sm mb-10">
+              Confirmamos tu turno por WhatsApp el mismo día.
             </p>
 
             <div className="h-anim-3 flex flex-col sm:flex-row gap-3 justify-center mb-14">
               <button onClick={() => goTo('turnos')}
                 className="px-9 py-4 bg-brand text-black font-bold text-base rounded-2xl hover:bg-brand-dark transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand/25 active:translate-y-0">
-                <i className="fas fa-calendar-check mr-2"></i>Reservar turno
+                <i className="fas fa-calendar-check mr-2"></i>Reservar turno gratis
               </button>
-              <button onClick={() => goTo('servicios')}
-                className="px-9 py-4 bg-white/[.08] backdrop-blur text-white font-semibold text-base rounded-2xl border border-white/[.12] hover:bg-white/[.13] transition-all hover:-translate-y-1 active:translate-y-0">
-                <i className="fas fa-list mr-2 opacity-70"></i>Ver servicios
-              </button>
+              <a href={`${WA_BASE}?text=${encodeURIComponent('Hola! Quiero consultar precios y disponibilidad.')}`}
+                target="_blank" rel="noopener noreferrer"
+                className="px-9 py-4 bg-[#25D366]/[.12] backdrop-blur text-[#25D366] font-semibold text-base rounded-2xl border border-[#25D366]/25 hover:bg-[#25D366]/20 transition-all hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2">
+                <i className="fab fa-whatsapp text-lg"></i>Consultar por WhatsApp
+              </a>
             </div>
 
-            {/* Indicators */}
-            <div className="h-anim-4 grid grid-cols-2 md:grid-cols-4 gap-2 max-w-xl mx-auto">
-              {['Atención personalizada','Terminaciones premium','Protección profesional','Trabajo real y detallado'].map((t, i) => (
-                <div key={i} className="flex items-center gap-2 bg-white/[.04] backdrop-blur border border-white/[.08] rounded-xl px-3 py-2.5 text-left">
-                  <span className="text-brand text-[9px] flex-shrink-0">✦</span>
-                  <span className="text-white/70 text-[11px] font-medium leading-tight">{t}</span>
+            {/* Trust indicators */}
+            <div className="h-anim-4 flex flex-wrap justify-center gap-3 max-w-lg mx-auto">
+              {[
+                {icon:'fa-shield-check', text:'Sin sorpresas'},
+                {icon:'fa-clock',        text:'Respuesta el mismo día'},
+                {icon:'fa-star',         text:'Clientes que vuelven'},
+                {icon:'fa-map-marker-alt',text:'Buenos Aires'},
+              ].map((t, i) => (
+                <div key={i} className="flex items-center gap-1.5 bg-white/[.04] backdrop-blur border border-white/[.08] rounded-full px-3 py-2">
+                  <i className={`fas ${t.icon} text-brand text-[10px]`}></i>
+                  <span className="text-white/60 text-[11px] font-medium">{t.text}</span>
                 </div>
               ))}
             </div>
@@ -338,10 +361,10 @@
     function Stats() {
       const ref = useReveal();
       const data = [
-        { val:'5+',   label:'Años de experiencia'      },
-        { val:'500+', label:'Vehículos tratados'        },
-        { val:'100%', label:'Satisfacción garantizada'  },
-        { val:'7',    label:'Servicios especializados'  },
+        { val:'5+',   label:'Años en el rubro'          },
+        { val:'500+', label:'Vehículos entregados'       },
+        { val:'98%',  label:'Clientes que vuelven'       },
+        { val:'1 día', label:'Para confirmar tu turno'  },
       ];
       return (
         <section className="py-14 bg-[#0d0d0d] border-y border-white/[.05]">
@@ -372,9 +395,9 @@
             <div className="text-center mb-16">
               <div ref={titleRef} className="rv">
                 <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Lo que hacemos</span>
-                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Nuestros Servicios</h2>
+                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Servicios</h2>
                 <p className="text-white/45 max-w-lg mx-auto text-base leading-relaxed">
-                  Cada servicio está diseñado para llevar tu vehículo al máximo nivel de cuidado, protección y presentación.
+                  Elegí el servicio que necesitás. Consultanos el precio por WhatsApp — respondemos rápido.
                 </p>
               </div>
             </div>
@@ -389,21 +412,97 @@
 
     function ServiceCard({ s, delay }) {
       const ref = useReveal(delay);
+      const waMsg = `Hola Morrey Detailing! Quiero consultar precio y disponibilidad para: ${s.name}.`;
       return (
-        <div ref={ref} className="rv group relative bg-[#111] border border-white/[.07] rounded-2xl p-7 hover:border-brand/35 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-brand/[.05] overflow-hidden cursor-default">
+        <div ref={ref} className="rv group relative bg-[#111] border border-white/[.07] rounded-2xl p-7 hover:border-brand/35 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-brand/[.05] overflow-hidden flex flex-col">
           {/* Glow line bottom */}
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           {/* Corner accent */}
           <div className="absolute -top-10 -right-10 w-28 h-28 bg-brand/[.03] rounded-full group-hover:bg-brand/[.07] transition-colors duration-500" />
 
-          <div className="relative">
+          <div className="relative flex flex-col flex-1">
             <div className="w-12 h-12 bg-brand/[.1] border border-brand/[.2] rounded-xl flex items-center justify-center mb-5 group-hover:bg-brand/[.15] transition-colors duration-300">
               <i className={`fas ${s.icon} text-brand text-lg`}></i>
             </div>
             <h3 className="text-white font-bold text-lg mb-3 leading-snug">{s.name}</h3>
-            <p className="text-white/45 text-sm leading-relaxed">{s.desc}</p>
+            <p className="text-white/45 text-sm leading-relaxed flex-1">{s.desc}</p>
+            <a href={`${WA_BASE}?text=${encodeURIComponent(waMsg)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="mt-5 flex items-center gap-2 text-brand text-sm font-semibold hover:text-brand-dark transition-colors group/cta">
+              <i className="fab fa-whatsapp text-base"></i>
+              Consultar precio
+              <i className="fas fa-arrow-right text-[10px] opacity-0 group-hover/cta:opacity-100 group-hover/cta:translate-x-1 transition-all"></i>
+            </a>
           </div>
         </div>
+      );
+    }
+
+    /* =============================================
+       HOW IT WORKS
+    ============================================= */
+
+    function HowItWorks() {
+      const ref = useReveal();
+      const steps = [
+        {
+          n: '01',
+          icon: 'fa-mobile-alt',
+          title: 'Elegí tu servicio',
+          desc: 'Reservá online en 2 minutos o escribinos por WhatsApp. Te respondemos rápido.',
+          cta: null,
+        },
+        {
+          n: '02',
+          icon: 'fa-check-circle',
+          title: 'Confirmamos el turno',
+          desc: 'Te avisamos por WhatsApp con fecha, hora y todo lo que necesitás saber.',
+          cta: null,
+        },
+        {
+          n: '03',
+          icon: 'fa-car-side',
+          title: 'Llevá tu auto',
+          desc: 'Venís en el horario pactado. Nosotros nos encargamos de todo el resto.',
+          cta: null,
+        },
+      ];
+      return (
+        <section className="py-20 bg-[#080808]">
+          <div className="max-w-5xl mx-auto px-5 md:px-8">
+            <div className="text-center mb-12">
+              <div ref={ref} className="rv">
+                <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Simple y rápido</span>
+                <h2 className="text-3xl md:text-4xl font-black mt-3">Así funciona</h2>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6 relative">
+              {/* Línea conectora desktop */}
+              <div className="hidden md:block absolute top-8 left-1/6 right-1/6 h-px bg-gradient-to-r from-transparent via-brand/30 to-transparent" />
+              {steps.map((s, i) => {
+                const sRef = useReveal(i * 120);
+                return (
+                  <div key={i} ref={sRef} className="rv flex flex-col items-center text-center p-6">
+                    <div className="relative mb-5">
+                      <div className="step-num w-16 h-16 rounded-2xl bg-brand/[.1] border border-brand/25 flex items-center justify-center">
+                        <i className={`fas ${s.icon} text-brand text-2xl`}></i>
+                      </div>
+                      <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-brand text-black text-[10px] font-black flex items-center justify-center">{s.n}</span>
+                    </div>
+                    <h3 className="font-bold text-white text-lg mb-2">{s.title}</h3>
+                    <p className="text-white/45 text-sm leading-relaxed">{s.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="text-center mt-8">
+              <button onClick={() => goTo('turnos')}
+                className="px-8 py-3.5 bg-brand text-black font-bold rounded-xl hover:bg-brand-dark transition-all hover:-translate-y-px text-sm">
+                <i className="fas fa-calendar-check mr-2"></i>Empezar ahora
+              </button>
+            </div>
+          </div>
+        </section>
       );
     }
 
@@ -465,7 +564,7 @@
               {/* Horizontal carousel */}
               <div className="relative">
                 {/* Left arrow */}
-                <button onClick={() => scrollStrip(-1)}
+                <button className="carousel-arrow" onClick={() => scrollStrip(-1)}
                   style={{position:'absolute',left:-20,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)',transition:'border-color .2s'}}>
                   <i className="fas fa-chevron-left text-sm"></i>
                 </button>
@@ -490,16 +589,25 @@
                 </div>
 
                 {/* Right arrow */}
-                <button onClick={() => scrollStrip(1)}
+                <button className="carousel-arrow" onClick={() => scrollStrip(1)}
                   style={{position:'absolute',right:-20,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)',transition:'border-color .2s'}}>
                   <i className="fas fa-chevron-right text-sm"></i>
                 </button>
               </div>
 
               <p className="text-center text-white/20 text-xs mt-5">
-                <i className="fas fa-hand-point-left mr-1"></i>
-                Deslizá para ver más fotos — hacé click en cualquiera para ampliar
+                Deslizá para ver más · tocá cualquier foto para ampliar
               </p>
+
+              {/* CTA galería */}
+              <div className="text-center mt-10">
+                <p className="text-white/50 text-sm mb-4">¿Querés este resultado para tu auto?</p>
+                <button onClick={() => goTo('turnos')}
+                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand text-black font-bold rounded-xl hover:bg-brand-dark transition-all hover:-translate-y-px text-sm">
+                  <i className="fas fa-calendar-check"></i>
+                  Reservar mi turno ahora
+                </button>
+              </div>
             </div>
           </section>
 
@@ -789,7 +897,7 @@
               {/* Carrusel horizontal */}
               <div style={{position:'relative'}}>
                 {/* Flecha izquierda */}
-                <button onClick={() => scrollStrip(-1)}
+                <button className="carousel-arrow" onClick={() => scrollStrip(-1)}
                   style={{position:'absolute',left:-22,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)'}}>
                   <i className="fas fa-chevron-left text-sm"></i>
                 </button>
@@ -805,7 +913,7 @@
                 </div>
 
                 {/* Flecha derecha */}
-                <button onClick={() => scrollStrip(1)}
+                <button className="carousel-arrow" onClick={() => scrollStrip(1)}
                   style={{position:'absolute',right:-22,top:'50%',transform:'translateY(-50%)',zIndex:10,background:'rgba(10,10,10,.9)',border:'1px solid rgba(255,255,255,.1)',color:'#fff',width:42,height:42,borderRadius:21,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(8px)'}}>
                   <i className="fas fa-chevron-right text-sm"></i>
                 </button>
@@ -905,10 +1013,18 @@
             <div className="text-center mb-12">
               <div ref={titleRef} className="rv">
                 <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">Reservá online</span>
-                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Agendar Turno</h2>
+                <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">Agendá tu turno</h2>
                 <p className="text-white/45 text-base max-w-md mx-auto">
-                  Completá el formulario y te confirmamos el turno por WhatsApp.
+                  Completá el formulario — te confirmamos el turno el mismo día por WhatsApp.
                 </p>
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <span className="text-white/30 text-sm">¿Preferís escribirnos directo?</span>
+                  <a href={`${WA_BASE}?text=${encodeURIComponent('Hola! Quiero pedir un turno. ¿Qué fechas tienen disponibles?')}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[#25D366] text-sm font-semibold hover:underline">
+                    <i className="fab fa-whatsapp"></i> WhatsApp
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -1049,20 +1165,21 @@
 
           <div className="relative max-w-3xl mx-auto px-5 text-center" ref={ref}>
             <div className="rv">
-              <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">¿Listo para empezar?</span>
+              <span className="text-brand text-[11px] font-semibold tracking-widest uppercase">¿Listo para transformar tu auto?</span>
               <h2 className="text-4xl md:text-6xl font-black mt-4 mb-5 leading-tight">
-                Dale a tu vehículo<br />el cuidado que<br />
-                <span className="text-gradient">realmente merece.</span>
+                Escribinos hoy<br />y coordinamos<br />
+                <span className="text-gradient">tu turno ahora.</span>
               </h2>
-              <p className="text-white/50 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-                Escribinos por WhatsApp y coordinamos el turno que más te convenga. Sin vueltas, sin esperas.
+              <p className="text-white/50 text-lg mb-3 max-w-xl mx-auto leading-relaxed">
+                Sin vueltas. Respondemos rápido y confirmamos el mismo día.
               </p>
+              <p className="text-white/30 text-sm mb-10">Lun–Vie 9–18hs · Sáb 9–13hs · Buenos Aires</p>
 
-              <a href={`${WA_BASE}?text=${encodeURIComponent('Hola Morrey Detailing! Quiero consultar sobre sus servicios.')}`}
+              <a href={`${WA_BASE}?text=${encodeURIComponent('Hola Morrey Detailing! Quiero consultar precios y disponibilidad para hacer un servicio. ¿Cuándo tienen lugar?')}`}
                 target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 px-10 py-5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold text-xl rounded-2xl transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-500/20 active:translate-y-0">
                 <i className="fab fa-whatsapp text-2xl"></i>
-                Hablar por WhatsApp
+                Pedir turno por WhatsApp
               </a>
 
               <div className="mt-14 flex flex-wrap items-center justify-center gap-8">
@@ -1140,10 +1257,12 @@
 
     function WAFloat() {
       return (
-        <a href={`${WA_BASE}?text=${encodeURIComponent('Hola Morrey Detailing! Me gustaría consultar sobre sus servicios.')}`}
+        <a href={`${WA_BASE}?text=${encodeURIComponent('Hola Morrey Detailing! Quiero consultar precios y disponibilidad.')}`}
           target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center text-white text-2xl wa-ripple hover:-translate-y-1 transition-transform shadow-xl shadow-black/30">
-          <i className="fab fa-whatsapp"></i>
+          className="wa-float-btn fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#25D366] text-white font-bold rounded-full wa-ripple hover:-translate-y-1 transition-transform shadow-xl shadow-black/40"
+          style={{padding:'14px 18px',paddingRight:20}}>
+          <i className="fab fa-whatsapp text-2xl flex-shrink-0"></i>
+          <span className="wa-float-label text-sm">Pedir turno</span>
         </a>
       );
     }
@@ -1159,6 +1278,7 @@
           <Hero />
           <Stats />
           <Services />
+          <HowItWorks />
           <Gallery />
           <WhyUs />
           <Testimonials />
