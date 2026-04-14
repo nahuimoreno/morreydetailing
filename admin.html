@@ -2399,6 +2399,704 @@ function CalendarioPage({bookings, setPage}) {
 }
 
 // ═══════════════════════════════════════════
+//  PRESUPUESTOS
+// ═══════════════════════════════════════════
+const PRESUP_STATUS = {
+  draft:     {label:'Borrador',   color:'bg-gray-700 text-gray-300'},
+  sent:      {label:'Enviado',    color:'bg-blue-500/20 text-blue-300'},
+  accepted:  {label:'Aceptado',  color:'bg-green-500/20 text-green-300'},
+  rejected:  {label:'Rechazado', color:'bg-red-500/20 text-red-300'},
+  converted: {label:'Convertido',color:'bg-brand/20 text-brand'},
+};
+
+function PresupuestosPage({setPage, setBookings, clients}) {
+  const [items, setItems] = useState(() => load('morrey_presupuestos', []));
+  const [modal, setModal] = useState(null); // null | 'new' | {presup}
+  const [filter, setFilter] = useState('all');
+  const toast = useToast();
+
+  const saveAll = (list) => { save('morrey_presupuestos', list); setItems(list); };
+
+  const emptyPresup = () => ({
+    id: uid(), clientName:'', clientPhone:'', vehicle:'', notes:'',
+    discount: 0, validDays: 7, status:'draft', createdAt: new Date().toISOString(),
+    items: [{service:'', price:''}],
+  });
+
+  const [form, setForm] = useState(emptyPresup);
+
+  const openNew = () => { setForm(emptyPresup()); setModal('new'); };
+  const openEdit = (p) => { setForm({...p}); setModal('edit'); };
+
+  const savePresup = () => {
+    if (!form.clientName.trim()) return toast('Ingresá el nombre del cliente', 'error');
+    if (!form.items.some(i => i.service && i.price)) return toast('Agregá al menos un servicio', 'error');
+    const list = modal === 'new'
+      ? [form, ...items]
+      : items.map(p => p.id === form.id ? form : p);
+    saveAll(list);
+    setModal(null);
+    toast(modal === 'new' ? 'Presupuesto creado' : 'Presupuesto actualizado', 'success');
+  };
+
+  const deletePresup = (id) => {
+    if (!confirm('¿Eliminar presupuesto?')) return;
+    saveAll(items.filter(p => p.id !== id));
+    toast('Eliminado', 'success');
+  };
+
+  const changeStatus = (id, status) => {
+    saveAll(items.map(p => p.id === id ? {...p, status} : p));
+  };
+
+  const convertToBooking = (p) => {
+    const nb = {
+      id: uid(), name: p.clientName, phone: p.clientPhone, vehicle: p.vehicle,
+      service: p.items[0]?.service || '', date:'', time:'', email:'',
+      status:'pending', notes: `Convertido desde presupuesto. ${p.notes||''}`,
+      priceEstimate: calcTotal(p), createdAt: new Date().toISOString(),
+    };
+    setBookings(prev => [nb, ...prev]);
+    changeStatus(p.id, 'converted');
+    setPage('turnos');
+    toast('Turno creado desde presupuesto', 'success');
+  };
+
+  const sendWA = (p) => {
+    const total = calcTotal(p);
+    const itemsTxt = p.items.filter(i=>i.service).map(i=>`• ${i.service}: $${Number(i.price||0).toLocaleString('es-AR')}`).join('\n');
+    const msg = `Hola ${p.clientName}! 👋\n\nTe paso el presupuesto para tu *${p.vehicle||'vehículo'}*:\n\n${itemsTxt}${p.discount>0?`\nDescuento: -$${Number(p.discount).toLocaleString('es-AR')}`:''}${p.discount>0?`\n*Total: $${total.toLocaleString('es-AR')}`:`\n*Total: $${total.toLocaleString('es-AR')}`}*\n\nVálido por ${p.validDays} días. ¿Lo tomamos? 😊`;
+    window.open(`https://wa.me/${p.clientPhone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const calcTotal = (p) => {
+    const sub = p.items.reduce((s,i) => s + Number(i.price||0), 0);
+    return Math.max(0, sub - Number(p.discount||0));
+  };
+
+  const filtered = filter === 'all' ? items : items.filter(p => p.status === filter);
+
+  const setItem = (idx, field, val) => {
+    setForm(f => ({...f, items: f.items.map((it,i) => i===idx ? {...it,[field]:val} : it)}));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">Presupuestos</h2>
+        <button className="btn btn-primary btn-sm" onClick={openNew}>
+          <i className="fas fa-plus mr-1"></i> Nuevo
+        </button>
+      </div>
+
+      {/* Filtros */}
+      <div className="flex gap-2 flex-wrap">
+        {['all',...Object.keys(PRESUP_STATUS)].map(s => (
+          <button key={s} onClick={()=>setFilter(s)}
+            className={`text-xs px-3 py-1 rounded-full border transition-colors ${filter===s?'bg-brand text-black border-brand':'border-[#222] text-gray-400 hover:border-brand/50'}`}>
+            {s==='all'?'Todos':PRESUP_STATUS[s].label}
+            {s!=='all' && <span className="ml-1 opacity-60">({items.filter(p=>p.status===s).length})</span>}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="card p-12 text-center text-gray-600">
+          <i className="fas fa-file-invoice-dollar text-3xl mb-3 block"></i>
+          <p>No hay presupuestos{filter!=='all'?` con estado "${PRESUP_STATUS[filter]?.label}"`:''}.</p>
+          {filter==='all' && <button className="btn btn-primary btn-sm mt-4" onClick={openNew}>Crear primero</button>}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(p => {
+            const total = calcTotal(p);
+            const st = PRESUP_STATUS[p.status] || PRESUP_STATUS.draft;
+            return (
+              <div key={p.id} className="card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold">{p.clientName||'Sin nombre'}</span>
+                      {p.vehicle && <span className="text-xs text-gray-500">· {p.vehicle}</span>}
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {new Date(p.createdAt).toLocaleDateString('es-AR')} · {p.items.filter(i=>i.service).length} servicio(s) · Válido {p.validDays}d
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {p.items.filter(i=>i.service).map((it,idx) => (
+                        <span key={idx} className="text-xs bg-white/5 px-2 py-0.5 rounded">{it.service} — ${Number(it.price||0).toLocaleString('es-AR')}</span>
+                      ))}
+                    </div>
+                    {p.notes && <p className="text-xs text-gray-500 mt-1 italic">"{p.notes}"</p>}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-lg font-bold text-brand">${total.toLocaleString('es-AR')}</div>
+                    {p.discount > 0 && <div className="text-xs text-gray-500">desc. ${Number(p.discount).toLocaleString('es-AR')}</div>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#1a1a1a] flex-wrap">
+                  <select value={p.status} onChange={e=>changeStatus(p.id,e.target.value)}
+                    className="input text-xs py-1 px-2 h-auto">
+                    {Object.entries(PRESUP_STATUS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(p)}>
+                    <i className="fas fa-pen"></i>
+                  </button>
+                  {p.clientPhone && (
+                    <button className="btn btn-ghost btn-sm text-green-400" onClick={()=>sendWA(p)} title="Enviar por WhatsApp">
+                      <i className="fab fa-whatsapp"></i>
+                    </button>
+                  )}
+                  {p.status !== 'converted' && (
+                    <button className="btn btn-ghost btn-sm text-brand" onClick={()=>convertToBooking(p)} title="Convertir en turno">
+                      <i className="fas fa-calendar-plus"></i>
+                    </button>
+                  )}
+                  <button className="btn btn-ghost btn-sm text-red-400 ml-auto" onClick={()=>deletePresup(p.id)}>
+                    <i className="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal */}
+      {modal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={e=>{if(e.target===e.currentTarget)setModal(null)}}>
+          <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold">{modal==='new'?'Nuevo presupuesto':'Editar presupuesto'}</h3>
+              <button onClick={()=>setModal(null)} className="text-gray-500 hover:text-white"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="label">Cliente *</label>
+                <input className="input" value={form.clientName} onChange={e=>setForm(f=>({...f,clientName:e.target.value}))} placeholder="Nombre completo" />
+              </div>
+              <div>
+                <label className="label">Teléfono</label>
+                <input className="input" value={form.clientPhone} onChange={e=>setForm(f=>({...f,clientPhone:e.target.value}))} placeholder="+54 9 11..." />
+              </div>
+              <div>
+                <label className="label">Vehículo</label>
+                <input className="input" value={form.vehicle} onChange={e=>setForm(f=>({...f,vehicle:e.target.value}))} placeholder="Marca Modelo" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="label mb-0">Servicios *</label>
+                <button className="text-xs text-brand hover:underline" onClick={()=>setForm(f=>({...f,items:[...f.items,{service:'',price:''}]}))}>
+                  + Agregar
+                </button>
+              </div>
+              {form.items.map((it, idx) => (
+                <div key={idx} className="flex gap-2 mb-2">
+                  <input className="input flex-1" value={it.service} onChange={e=>setItem(idx,'service',e.target.value)} placeholder="Servicio" />
+                  <input className="input w-28" type="number" value={it.price} onChange={e=>setItem(idx,'price',e.target.value)} placeholder="$" />
+                  {form.items.length > 1 && (
+                    <button className="text-gray-600 hover:text-red-400 px-1" onClick={()=>setForm(f=>({...f,items:f.items.filter((_,i)=>i!==idx)}))}>
+                      <i className="fas fa-times text-xs"></i>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">Descuento ($)</label>
+                <input className="input" type="number" value={form.discount} onChange={e=>setForm(f=>({...f,discount:e.target.value}))} placeholder="0" />
+              </div>
+              <div>
+                <label className="label">Válido (días)</label>
+                <input className="input" type="number" value={form.validDays} onChange={e=>setForm(f=>({...f,validDays:e.target.value}))} />
+              </div>
+              <div className="col-span-2">
+                <label className="label">Notas</label>
+                <textarea className="input" rows="2" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Observaciones adicionales..." />
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-[#222]">
+              <div className="text-sm">
+                <span className="text-gray-500">Total: </span>
+                <span className="font-bold text-brand text-lg">${calcTotal(form).toLocaleString('es-AR')}</span>
+              </div>
+              <div className="flex gap-2">
+                <button className="btn btn-ghost btn-sm" onClick={()=>setModal(null)}>Cancelar</button>
+                <button className="btn btn-primary btn-sm" onClick={savePresup}>Guardar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  PLANTILLAS WHATSAPP
+// ═══════════════════════════════════════════
+const DEFAULT_TEMPLATES = [
+  { id:'tpl-confirm',     cat:'confirm',     icon:'fa-calendar-check', color:'text-green-400',  name:'Confirmación de turno',
+    text:'Hola {nombre}! ✅ Tu turno está *confirmado* para el *{fecha} a las {hora}*.\nServicio: {servicio}\nVehículo: {vehiculo}\n\n¡Te esperamos! 🚗✨' },
+  { id:'tpl-reminder',    cat:'reminder',    icon:'fa-bell',           color:'text-yellow-400', name:'Recordatorio de turno',
+    text:'Hola {nombre}! 📅 Te recordamos que mañana tenés turno a las *{hora}*.\nServicio: {servicio}\n\n¿Tenés alguna duda? Escribinos 😊' },
+  { id:'tpl-thanks',      cat:'thanks',      icon:'fa-heart',          color:'text-red-400',    name:'Agradecimiento post-servicio',
+    text:'Hola {nombre}! Gracias por elegirnos 🙏\n\nEsperamos que hayas quedado feliz con el resultado de tu *{vehiculo}*. ¡Hasta la próxima! 🚗✨' },
+  { id:'tpl-review',      cat:'review',      icon:'fa-star',           color:'text-brand',      name:'Pedido de reseña',
+    text:'Hola {nombre}! ⭐ Si quedaste contento con el servicio, nos ayudarías mucho dejando una reseña en Google.\n\nTe lleva menos de 1 minuto y significa mucho para nosotros 🙏' },
+  { id:'tpl-quote',       cat:'quote',       icon:'fa-file-invoice',   color:'text-blue-400',   name:'Envío de presupuesto',
+    text:'Hola {nombre}! 👋 Te paso el presupuesto para tu *{vehiculo}*:\n\n{items}\n*Total: ${total}*\n\nVálido por {dias} días. ¿Arrancamos? 😊' },
+  { id:'tpl-maintenance', cat:'maintenance', icon:'fa-wrench',         color:'text-purple-400', name:'Recordatorio de mantenimiento',
+    text:'Hola {nombre}! 🔧 Hace un tiempo que no pasás por el taller. Tu {vehiculo} podría necesitar un mantenimiento.\n\n¿Querés coordinar un turno? Tenemos disponibilidad esta semana 😊' },
+  { id:'tpl-promo',       cat:'promo',       icon:'fa-tag',            color:'text-orange-400', name:'Promoción especial',
+    text:'Hola {nombre}! 🎉 Tenemos una promo especial esta semana.\n\n¿Te interesa? Respondé este mensaje y te contamos los detalles 😊' },
+];
+
+const TPL_CATS = {
+  confirm: 'Confirmación', reminder: 'Recordatorio', thanks: 'Agradecimiento',
+  review: 'Reseña', quote: 'Presupuesto', maintenance: 'Mantenimiento', promo: 'Promoción',
+};
+
+const VARIABLES = ['{nombre}','{fecha}','{hora}','{servicio}','{vehiculo}','{total}','{dias}','{items}'];
+
+function PlantillasPage() {
+  const [templates, setTemplates] = useState(() => {
+    const saved = load('morrey_plantillas', null);
+    if (saved) return saved;
+    save('morrey_plantillas', DEFAULT_TEMPLATES);
+    return DEFAULT_TEMPLATES;
+  });
+  const [editing, setEditing] = useState(null); // null | template id
+  const [copied, setCopied] = useState(null);
+  const toast = useToast();
+
+  const saveTemplates = (list) => { save('morrey_plantillas', list); setTemplates(list); };
+
+  const updateText = (id, text) => {
+    saveTemplates(templates.map(t => t.id === id ? {...t, text} : t));
+  };
+
+  const updateName = (id, name) => {
+    saveTemplates(templates.map(t => t.id === id ? {...t, name} : t));
+  };
+
+  const resetDefault = (id) => {
+    const def = DEFAULT_TEMPLATES.find(t => t.id === id);
+    if (!def) return;
+    saveTemplates(templates.map(t => t.id === id ? {...def} : t));
+    toast('Plantilla restaurada', 'success');
+  };
+
+  const copyText = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(text);
+      toast('Copiado al portapapeles', 'success');
+      setTimeout(() => setCopied(null), 2000);
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">Plantillas de WhatsApp</h2>
+        <span className="text-xs text-gray-500">{templates.length} plantillas</span>
+      </div>
+
+      {/* Variables reference */}
+      <div className="card p-3">
+        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">Variables disponibles</p>
+        <div className="flex flex-wrap gap-2">
+          {VARIABLES.map(v => (
+            <button key={v} onClick={()=>copyText(v)}
+              className="text-xs font-mono bg-white/5 hover:bg-brand/20 hover:text-brand border border-[#222] hover:border-brand/40 px-2 py-1 rounded transition-colors">
+              {v}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-600 mt-2">Cliqueá una variable para copiarla, luego pegala en la plantilla que quieras editar.</p>
+      </div>
+
+      <div className="grid gap-4">
+        {templates.map(t => {
+          const isEditing = editing === t.id;
+          return (
+            <div key={t.id} className="card p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <i className={`fas ${t.icon} ${t.color} w-5 text-center`}></i>
+                {isEditing ? (
+                  <input className="input flex-1 py-1 text-sm font-semibold" value={t.name}
+                    onChange={e=>updateName(t.id, e.target.value)} />
+                ) : (
+                  <span className="font-semibold flex-1">{t.name}</span>
+                )}
+                <span className="text-xs text-gray-600 bg-white/5 px-2 py-0.5 rounded">{TPL_CATS[t.cat]||t.cat}</span>
+              </div>
+
+              {isEditing ? (
+                <textarea className="input w-full text-sm font-mono" rows="5" value={t.text}
+                  onChange={e=>updateText(t.id, e.target.value)} />
+              ) : (
+                <pre className="text-sm text-gray-400 whitespace-pre-wrap font-sans leading-relaxed bg-black/20 rounded-lg p-3">
+                  {t.text}
+                </pre>
+              )}
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button onClick={()=>setEditing(isEditing ? null : t.id)}
+                  className={`btn btn-sm ${isEditing?'btn-primary':'btn-ghost'}`}>
+                  <i className={`fas ${isEditing?'fa-check':'fa-pen'} mr-1`}></i>
+                  {isEditing ? 'Guardar' : 'Editar'}
+                </button>
+                <button onClick={()=>copyText(t.text)}
+                  className={`btn btn-ghost btn-sm ${copied===t.text?'text-green-400':''}`}>
+                  <i className={`fas ${copied===t.text?'fa-check':'fa-copy'} mr-1`}></i>
+                  {copied===t.text ? 'Copiado' : 'Copiar'}
+                </button>
+                {DEFAULT_TEMPLATES.find(d=>d.id===t.id && d.text!==t.text) && (
+                  <button onClick={()=>resetDefault(t.id)} className="btn btn-ghost btn-sm text-gray-500">
+                    <i className="fas fa-rotate-left mr-1"></i> Restaurar
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  MANTENIMIENTO / RECORDATORIOS
+// ═══════════════════════════════════════════
+function MantenimientoPage({clients, bookings}) {
+  const [minMonths, setMinMonths] = useState(3);
+  const [sent, setSent] = useState(() => load('morrey_maint_sent', {}));
+  const toast = useToast();
+
+  const markSent = (clientId) => {
+    const updated = {...sent, [clientId]: new Date().toISOString()};
+    save('morrey_maint_sent', updated);
+    setSent(updated);
+    toast('Marcado como recordatorio enviado', 'success');
+  };
+
+  // Para cada cliente, calcular cuándo fue su último turno completado
+  const rows = clients.map(c => {
+    const myBookings = bookings.filter(b =>
+      (b.phone && b.phone === c.phone) || (b.name && b.name.toLowerCase() === c.name.toLowerCase())
+    ).filter(b => b.status === 'done');
+    const last = myBookings.sort((a,b) => new Date(b.date||b.createdAt) - new Date(a.date||a.createdAt))[0];
+    const lastDate = last ? new Date(last.date || last.createdAt) : null;
+    const monthsAgo = lastDate ? Math.floor((Date.now() - lastDate) / (30*24*60*60*1000)) : null;
+    const lastSent = sent[c.id] ? new Date(sent[c.id]) : null;
+    return { ...c, lastDate, monthsAgo, lastBooking: last, lastSent };
+  }).filter(c => c.monthsAgo === null || c.monthsAgo >= minMonths)
+    .sort((a,b) => {
+      if (a.monthsAgo === null && b.monthsAgo === null) return 0;
+      if (a.monthsAgo === null) return 1;
+      if (b.monthsAgo === null) return -1;
+      return b.monthsAgo - a.monthsAgo;
+    });
+
+  const urgencyColor = (months) => {
+    if (months === null) return 'border-gray-700 bg-gray-800/30';
+    if (months >= 6) return 'border-red-500/40 bg-red-500/5';
+    if (months >= 4) return 'border-yellow-500/40 bg-yellow-500/5';
+    return 'border-green-500/30 bg-green-500/5';
+  };
+
+  const urgencyBadge = (months) => {
+    if (months === null) return <span className="text-xs text-gray-500">Sin historial</span>;
+    if (months >= 6) return <span className="text-xs text-red-400 font-semibold">{months} meses — Urgente</span>;
+    if (months >= 4) return <span className="text-xs text-yellow-400">{months} meses — Recomendado</span>;
+    return <span className="text-xs text-green-400">{months} meses</span>;
+  };
+
+  const sendWA = (c) => {
+    const tpls = load('morrey_plantillas', DEFAULT_TEMPLATES);
+    const tpl = tpls.find(t => t.cat === 'maintenance') || DEFAULT_TEMPLATES.find(t => t.cat === 'maintenance');
+    const text = tpl.text
+      .replace(/{nombre}/g, c.name)
+      .replace(/{vehiculo}/g, c.vehicle || 'vehículo');
+    const phone = c.phone.replace(/\D/g,'');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    markSent(c.id);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold">Recordatorios de mantenimiento</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Clientes que no vuelven hace tiempo</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500">Mostrar desde</label>
+          <select className="input py-1 text-sm w-auto" value={minMonths} onChange={e=>setMinMonths(Number(e.target.value))}>
+            <option value={2}>2+ meses</option>
+            <option value={3}>3+ meses</option>
+            <option value={4}>4+ meses</option>
+            <option value={6}>6+ meses</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          {label:'Sin historial', count: rows.filter(r=>r.monthsAgo===null).length, color:'text-gray-400'},
+          {label:'4-6 meses', count: rows.filter(r=>r.monthsAgo>=4&&r.monthsAgo<6).length, color:'text-yellow-400'},
+          {label:'6+ meses', count: rows.filter(r=>r.monthsAgo>=6).length, color:'text-red-400'},
+        ].map(s => (
+          <div key={s.label} className="card p-3 text-center">
+            <div className={`text-2xl font-bold ${s.color}`}>{s.count}</div>
+            <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="card p-12 text-center text-gray-600">
+          <i className="fas fa-check-circle text-3xl text-green-500 mb-3 block"></i>
+          <p>Todos tus clientes visitaron el taller en los últimos {minMonths} meses. 🎉</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {rows.map(c => (
+            <div key={c.id} className={`card p-4 border ${urgencyColor(c.monthsAgo)}`}>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 text-sm font-bold text-brand">
+                    {c.name?.[0]?.toUpperCase()||'?'}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm">{c.name}</div>
+                    <div className="text-xs text-gray-500">{c.phone||'Sin teléfono'}{c.vehicle&&` · ${c.vehicle}`}</div>
+                    <div className="mt-0.5">{urgencyBadge(c.monthsAgo)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {c.lastDate && (
+                    <span className="text-xs text-gray-500">
+                      Último: {c.lastDate.toLocaleDateString('es-AR')}
+                    </span>
+                  )}
+                  {c.lastSent && (
+                    <span className="text-xs text-gray-600">
+                      Recordatorio: {c.lastSent.toLocaleDateString('es-AR')}
+                    </span>
+                  )}
+                  {c.phone && (
+                    <button className="btn btn-sm bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30" onClick={()=>sendWA(c)}>
+                      <i className="fab fa-whatsapp mr-1"></i> Recordar
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  INVENTARIO
+// ═══════════════════════════════════════════
+const UNITS = ['Litros','ml','kg','g','Unidades','Paños','Rollos','Sprays'];
+const DEFAULT_INVENTORY = [
+  {id:uid(),name:'Koch Chemie Allround',brand:'Koch Chemie',quantity:2,unit:'Litros',minStock:1,cost:3500,notes:''},
+  {id:uid(),name:'Gyeon Tire',brand:'Gyeon',quantity:1,unit:'Litros',minStock:1,cost:4200,notes:''},
+  {id:uid(),name:'Sonax Xtreme Wax',brand:'Sonax',quantity:3,unit:'Litros',minStock:2,cost:2800,notes:''},
+  {id:uid(),name:'Microfibras Premium',brand:'',quantity:12,unit:'Paños',minStock:6,cost:800,notes:''},
+];
+
+function InventarioPage() {
+  const [items, setItems] = useState(() => {
+    const saved = load('morrey_inventario', null);
+    if (saved) return saved;
+    save('morrey_inventario', DEFAULT_INVENTORY);
+    return DEFAULT_INVENTORY;
+  });
+  const [modal, setModal] = useState(null); // null | 'new' | item
+  const [form, setForm] = useState({});
+  const [filter, setFilter] = useState('all');
+  const toast = useToast();
+
+  const saveAll = (list) => { save('morrey_inventario', list); setItems(list); };
+
+  const emptyForm = () => ({id:uid(),name:'',brand:'',quantity:0,unit:'Unidades',minStock:1,cost:0,notes:''});
+
+  const openNew = () => { setForm(emptyForm()); setModal('new'); };
+  const openEdit = (item) => { setForm({...item}); setModal('edit'); };
+
+  const saveItem = () => {
+    if (!form.name?.trim()) return toast('Ingresá el nombre del producto', 'error');
+    const list = modal === 'new'
+      ? [...items, form]
+      : items.map(i => i.id === form.id ? form : i);
+    saveAll(list);
+    setModal(null);
+    toast(modal === 'new' ? 'Producto agregado' : 'Producto actualizado', 'success');
+  };
+
+  const deleteItem = (id) => {
+    if (!confirm('¿Eliminar producto?')) return;
+    saveAll(items.filter(i => i.id !== id));
+    toast('Eliminado', 'success');
+  };
+
+  const adjustQty = (id, delta) => {
+    saveAll(items.map(i => i.id === id ? {...i, quantity: Math.max(0, Number(i.quantity) + delta)} : i));
+  };
+
+  const lowStock = items.filter(i => Number(i.quantity) <= Number(i.minStock));
+  const filtered = filter === 'low' ? lowStock : items;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold">Inventario</h2>
+          {lowStock.length > 0 && (
+            <p className="text-xs text-red-400 mt-0.5"><i className="fas fa-triangle-exclamation mr-1"></i>{lowStock.length} producto(s) con stock bajo</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg overflow-hidden border border-[#222]">
+            {[['all','Todos'],['low','Stock bajo']].map(([v,l]) => (
+              <button key={v} onClick={()=>setFilter(v)}
+                className={`text-xs px-3 py-1.5 transition-colors ${filter===v?'bg-brand text-black font-semibold':'text-gray-400 hover:text-white'}`}>
+                {l}{v==='low'&&lowStock.length>0&&<span className="ml-1 bg-red-500 text-white rounded-full px-1">{lowStock.length}</span>}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={openNew}>
+            <i className="fas fa-plus mr-1"></i> Agregar
+          </button>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="card p-12 text-center text-gray-600">
+          <i className="fas fa-boxes-stacked text-3xl mb-3 block"></i>
+          <p>{filter==='low'?'No hay productos con stock bajo. ✅':'No hay productos en el inventario.'}</p>
+          {filter==='all' && <button className="btn btn-primary btn-sm mt-4" onClick={openNew}>Agregar primero</button>}
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {filtered.map(item => {
+            const isLow = Number(item.quantity) <= Number(item.minStock);
+            return (
+              <div key={item.id} className={`card p-4 border ${isLow?'border-red-500/30':'border-[#1a1a1a]'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm">{item.name}</span>
+                      {item.brand && <span className="text-xs text-gray-500">· {item.brand}</span>}
+                      {isLow && <span className="text-xs text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full"><i className="fas fa-triangle-exclamation mr-1"></i>Stock bajo</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      Mínimo: {item.minStock} {item.unit}
+                      {item.cost > 0 && ` · Costo: $${Number(item.cost).toLocaleString('es-AR')}/${item.unit.toLowerCase()}`}
+                    </div>
+                    {item.notes && <p className="text-xs text-gray-600 mt-1">{item.notes}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={()=>adjustQty(item.id,-1)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                      <i className="fas fa-minus text-xs"></i>
+                    </button>
+                    <div className="text-center min-w-[3.5rem]">
+                      <div className={`text-lg font-bold ${isLow?'text-red-400':'text-white'}`}>{item.quantity}</div>
+                      <div className="text-xs text-gray-600">{item.unit}</div>
+                    </div>
+                    <button onClick={()=>adjustQty(item.id,1)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-brand/20 flex items-center justify-center text-gray-400 hover:text-brand transition-colors">
+                      <i className="fas fa-plus text-xs"></i>
+                    </button>
+                    <button onClick={()=>openEdit(item)} className="btn btn-ghost btn-sm ml-2">
+                      <i className="fas fa-pen"></i>
+                    </button>
+                    <button onClick={()=>deleteItem(item.id)} className="btn btn-ghost btn-sm text-red-400">
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Resumen */}
+      {items.length > 0 && (
+        <div className="card p-3 flex items-center gap-4 flex-wrap">
+          <span className="text-xs text-gray-500"><i className="fas fa-box mr-1"></i>{items.length} productos</span>
+          <span className="text-xs text-gray-500"><i className="fas fa-dollar-sign mr-1"></i>
+            Valor inventario: ${items.reduce((s,i)=>s+Number(i.cost||0)*Number(i.quantity||0),0).toLocaleString('es-AR')}
+          </span>
+          {lowStock.length > 0 && (
+            <span className="text-xs text-red-400 ml-auto"><i className="fas fa-triangle-exclamation mr-1"></i>{lowStock.length} a reponer</span>
+          )}
+        </div>
+      )}
+
+      {/* Modal */}
+      {modal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={e=>{if(e.target===e.currentTarget)setModal(null)}}>
+          <div className="card w-full max-w-md p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold">{modal==='new'?'Nuevo producto':'Editar producto'}</h3>
+              <button onClick={()=>setModal(null)} className="text-gray-500 hover:text-white"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="label">Nombre *</label>
+                <input className="input" value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Ej: Koch Chemie Allround" />
+              </div>
+              <div>
+                <label className="label">Marca</label>
+                <input className="input" value={form.brand||''} onChange={e=>setForm(f=>({...f,brand:e.target.value}))} placeholder="Opcional" />
+              </div>
+              <div>
+                <label className="label">Unidad</label>
+                <select className="input" value={form.unit||'Unidades'} onChange={e=>setForm(f=>({...f,unit:e.target.value}))}>
+                  {UNITS.map(u => <option key={u}>{u}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Stock actual</label>
+                <input className="input" type="number" value={form.quantity||0} onChange={e=>setForm(f=>({...f,quantity:Number(e.target.value)}))} />
+              </div>
+              <div>
+                <label className="label">Stock mínimo</label>
+                <input className="input" type="number" value={form.minStock||1} onChange={e=>setForm(f=>({...f,minStock:Number(e.target.value)}))} />
+              </div>
+              <div className="col-span-2">
+                <label className="label">Costo por unidad ($)</label>
+                <input className="input" type="number" value={form.cost||0} onChange={e=>setForm(f=>({...f,cost:Number(e.target.value)}))} placeholder="0" />
+              </div>
+              <div className="col-span-2">
+                <label className="label">Notas</label>
+                <input className="input" value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Opcional" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#222]">
+              <button className="btn btn-ghost btn-sm" onClick={()=>setModal(null)}>Cancelar</button>
+              <button className="btn btn-primary btn-sm" onClick={saveItem}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
 //  SIDEBAR
 // ═══════════════════════════════════════════
 const NAV = [
@@ -2409,9 +3107,13 @@ const NAV = [
   {id:'clientes',    icon:'fa-users',          label:'Clientes'},
   {id:'servicios',   icon:'fa-wrench',         label:'Servicios'},
   {id:'galeria',     icon:'fa-images',         label:'Galería'},
-  {id:'testimonios', icon:'fa-star',           label:'Testimonios'},
-  {id:'packs',       icon:'fa-box-open',       label:'Packs'},
-  {id:'config',      icon:'fa-sliders',        label:'Configuración'},
+  {id:'testimonios',  icon:'fa-star',           label:'Testimonios'},
+  {id:'packs',        icon:'fa-box-open',       label:'Packs'},
+  {id:'presupuestos', icon:'fa-file-invoice-dollar', label:'Presupuestos'},
+  {id:'plantillas',   icon:'fa-comment-dots',   label:'Plantillas WA'},
+  {id:'mantenimiento',icon:'fa-wrench',         label:'Mantenimiento'},
+  {id:'inventario',   icon:'fa-boxes-stacked',  label:'Inventario'},
+  {id:'config',       icon:'fa-sliders',        label:'Configuración'},
 ];
 
 function Sidebar({page, setPage, onClose, pendingCount, pendingTestimonials}) {
@@ -2574,16 +3276,20 @@ function App() {
   if (!auth) return <LoginPage onLogin={login} />;
 
   const pages = {
-    dashboard:  <Dashboard bookings={bookings} clients={clients} services={services} />,
-    calendario: <CalendarioPage bookings={bookings} setPage={setPage} />,
-    turnos:     <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} clients={clients} setClients={setClients} />,
-    caja:       <CajaPage bookings={bookings} setBookings={setBookings} />,
-    clientes:   <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
-    servicios:  <ServiciosPage services={services} setServices={setServices} />,
-    galeria:    <GaleriaPage />,
-    testimonios:<TestimoniosPage items={testimonials} setItems={setTestimonials} services={services} />,
-    packs:      <PacksPage />,
-    config:     <ConfigPage />,
+    dashboard:    <Dashboard bookings={bookings} clients={clients} services={services} />,
+    calendario:   <CalendarioPage bookings={bookings} setPage={setPage} />,
+    turnos:       <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} clients={clients} setClients={setClients} />,
+    caja:         <CajaPage bookings={bookings} setBookings={setBookings} />,
+    clientes:     <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
+    servicios:    <ServiciosPage services={services} setServices={setServices} />,
+    galeria:      <GaleriaPage />,
+    testimonios:  <TestimoniosPage items={testimonials} setItems={setTestimonials} services={services} />,
+    packs:        <PacksPage />,
+    presupuestos: <PresupuestosPage setPage={setPage} setBookings={setBookings} clients={clients} />,
+    plantillas:   <PlantillasPage />,
+    mantenimiento:<MantenimientoPage clients={clients} bookings={bookings} />,
+    inventario:   <InventarioPage />,
+    config:       <ConfigPage />,
   };
 
   return (
