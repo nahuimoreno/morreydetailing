@@ -1,1398 +1,1578 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Morrey Detailing</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="icon" href="logo.jpg" type="image/jpeg">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morrey Detailing — Admin</title>
+  <link rel="icon" href="logo.jpg" type="image/jpeg" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { brand: '#ffde00', 'brand-d': '#c9af00' },
+          fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+        }
+      }
+    }
+  </script>
   <style>
-    :root {
-      --yellow: #ffde00;
-      --yellow-dim: rgba(255,222,0,0.15);
-      --bg: #0a0a0a;
-      --surface: #111;
-      --surface2: #181818;
-      --border: rgba(255,255,255,0.07);
-      --text: #fff;
-      --text-muted: rgba(255,255,255,0.5);
-      --red: #ff4d4d;
-      --green: #2ecc71;
-      --orange: #f39c12;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      font-size: 15px;
-    }
-
-    /* ---- LOGIN ---- */
-    #loginScreen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .login-card {
-      background: var(--surface);
-      border: 1px solid rgba(255,222,0,0.18);
-      border-radius: 18px;
-      padding: 44px 36px 36px;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-    }
-    .login-logo {
-      height: 70px;
-      width: auto;
-      object-fit: contain;
-      margin-bottom: 24px;
-    }
-    .login-card h1 {
-      font-size: 1.35rem;
-      margin-bottom: 6px;
-    }
-    .login-card p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 28px;
-    }
-    .login-group {
-      position: relative;
-      margin-bottom: 16px;
-    }
-    .login-group input {
-      width: 100%;
-      padding: 13px 44px 13px 16px;
-      background: #0d0d0d;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 1rem;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .login-group input:focus { outline: none; border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,222,0,0.1); }
-    .login-group .toggle-pw {
-      position: absolute;
-      right: 13px; top: 50%;
-      transform: translateY(-50%);
-      background: none; border: none;
-      color: var(--text-muted); cursor: pointer;
-      font-size: 1rem; transition: color 0.15s;
-    }
-    .login-group .toggle-pw:hover { color: #fff; }
-    .login-btn {
-      width: 100%;
-      padding: 13px;
-      background: var(--yellow);
-      color: #000;
-      border: none;
-      border-radius: 30px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.15s;
-      margin-top: 6px;
-    }
-    .login-btn:hover { background: #e6c800; transform: translateY(-1px); }
-    .login-error {
-      color: var(--red);
-      font-size: 0.88rem;
-      margin-top: 12px;
-      display: none;
-    }
-
-    /* ---- DASHBOARD ---- */
-    #dashboard { display: none; flex-direction: column; min-height: 100vh; }
-
-    .admin-header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .admin-header-left { display: flex; align-items: center; gap: 14px; }
-    .admin-header-logo { height: 44px; width: auto; object-fit: contain; }
-    .admin-header h2 { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
-    .admin-header-right { display: flex; align-items: center; gap: 12px; }
-    .btn-site {
-      padding: 7px 16px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .btn-site:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
-    .btn-logout {
-      padding: 7px 16px;
-      background: rgba(255,77,77,0.1);
-      border: 1px solid rgba(255,77,77,0.25);
-      border-radius: 20px;
-      color: var(--red);
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .btn-logout:hover { background: rgba(255,77,77,0.2); }
-
-    /* Tabs */
-    .admin-tabs {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      padding: 0 24px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .admin-tabs::-webkit-scrollbar { display: none; }
-    .tab-btn {
-      padding: 14px 20px;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .tab-btn:hover { color: #fff; }
-    .tab-btn.active { color: var(--yellow); border-bottom-color: var(--yellow); }
-
-    /* Content */
-    .admin-content { flex: 1; padding: 28px 24px; max-width: 1100px; margin: 0 auto; width: 100%; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    /* Stats cards */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 13px;
-      padding: 20px 18px;
-    }
-    .stat-card .stat-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
-    }
-    .stat-card .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--yellow);
-      line-height: 1;
-    }
-    .stat-card .stat-sub {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* Filters */
-    .filter-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    .filter-btn {
-      padding: 7px 16px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .filter-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
-    .filter-btn.active {
-      background: var(--yellow-dim);
-      border-color: var(--yellow);
-      color: var(--yellow);
-    }
-
-    /* Bookings list */
-    .bookings-list { display: flex; flex-direction: column; gap: 10px; }
-    .booking-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 16px;
-      align-items: center;
-      transition: border-color 0.2s;
-    }
-    .booking-card:hover { border-color: rgba(255,255,255,0.14); }
-    .booking-card.status-confirmed { border-left: 3px solid var(--green); }
-    .booking-card.status-pending { border-left: 3px solid var(--orange); }
-    .booking-card.status-cancelled { border-left: 3px solid rgba(255,255,255,0.15); opacity: 0.5; }
-
-    .booking-date-box {
-      background: var(--surface2);
-      border-radius: 10px;
-      padding: 10px 14px;
-      text-align: center;
-      min-width: 64px;
-    }
-    .booking-date-box .bdb-day { font-size: 1.6rem; font-weight: 700; line-height: 1; color: var(--yellow); }
-    .booking-date-box .bdb-month { font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
-
-    .booking-info h4 { font-size: 0.97rem; margin-bottom: 4px; }
-    .booking-info .bi-service {
-      display: inline-block;
-      background: var(--yellow-dim);
-      color: var(--yellow);
-      font-size: 0.75rem;
-      padding: 2px 10px;
-      border-radius: 20px;
-      margin-bottom: 8px;
-    }
-    .booking-info .bi-contact { font-size: 0.83rem; color: var(--text-muted); display: flex; gap: 14px; flex-wrap: wrap; }
-    .booking-info .bi-contact span { display: flex; align-items: center; gap: 5px; }
-
-    .booking-actions-col { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-    .ba-btn {
-      padding: 7px 13px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-      display: flex; align-items: center; gap: 5px;
-    }
-    .ba-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
-    .ba-btn.confirm { border-color: rgba(46,204,113,0.3); color: var(--green); }
-    .ba-btn.confirm:hover { background: rgba(46,204,113,0.1); }
-    .ba-btn.wa { border-color: rgba(37,211,102,0.35); color: #25D366; }
-    .ba-btn.wa:hover { background: rgba(37,211,102,0.12); }
-    .ba-btn.cancel { border-color: rgba(255,77,77,0.3); color: var(--red); }
-    .ba-btn.cancel:hover { background: rgba(255,77,77,0.1); }
-    .ba-btn.delete { border-color: rgba(255,77,77,0.15); color: rgba(255,77,77,0.5); }
-    .ba-btn.delete:hover { color: var(--red); border-color: rgba(255,77,77,0.4); }
-
-    .badge-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.75rem;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-weight: 600;
-    }
-    .badge-status.pending { background: rgba(243,156,18,0.15); color: var(--orange); }
-    .badge-status.confirmed { background: rgba(46,204,113,0.15); color: var(--green); }
-    .badge-status.cancelled { background: rgba(255,255,255,0.06); color: var(--text-muted); }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
-    }
-    .empty-state i { font-size: 2.5rem; margin-bottom: 16px; opacity: 0.3; display: block; }
-
-    /* Admin Calendar */
-    .cal-admin-wrap {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 24px;
-      align-items: start;
-    }
-    @media (max-width: 800px) {
-      .cal-admin-wrap { grid-template-columns: 1fr; }
-    }
-
-    .admin-cal-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 22px;
-    }
-    .admin-cal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .admin-cal-header h3 { font-size: 1.05rem; text-transform: capitalize; }
-    .acal-nav {
-      background: none;
-      border: 1px solid var(--border);
-      color: #fff;
-      width: 34px; height: 34px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.1rem;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .acal-nav:hover { background: var(--yellow-dim); border-color: var(--yellow); }
-
-    .admin-cal-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7,1fr);
-      gap: 3px;
-      margin-bottom: 8px;
-    }
-    .admin-cal-weekdays span {
-      text-align: center;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-      padding: 4px 0;
-    }
-    .admin-cal-grid {
-      display: grid;
-      grid-template-columns: repeat(7,1fr);
-      gap: 4px;
-    }
-    .acal-cell {
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 9px;
-      font-size: 0.88rem;
-      cursor: pointer;
-      position: relative;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-      color: var(--text);
-      gap: 2px;
-    }
-    .acal-cell:hover:not(.empty) { background: rgba(255,255,255,0.05); border-color: var(--border); }
-    .acal-cell.today { border-color: rgba(255,222,0,0.4); }
-    .acal-cell.selected { background: var(--yellow-dim); border-color: var(--yellow); }
-    .acal-cell.empty { cursor: default; }
-    .acal-cell.past { color: rgba(255,255,255,0.2); }
-    .acal-count {
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 10px;
-      line-height: 1.2;
-    }
-    .acal-count.c1 { background: rgba(46,204,113,0.2); color: var(--green); }
-    .acal-count.c2 { background: rgba(243,156,18,0.2); color: var(--orange); }
-    .acal-count.c3 { background: rgba(255,77,77,0.2); color: var(--red); }
-
-    .day-detail-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-    }
-    .day-detail-box h4 {
-      font-size: 0.95rem;
-      margin-bottom: 16px;
-      color: var(--text-muted);
-      text-transform: capitalize;
-    }
-    .day-detail-box h4 span { color: var(--yellow); }
-    .day-booking-item {
-      background: var(--surface2);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      font-size: 0.88rem;
-    }
-    .day-booking-item .dbi-name { font-weight: 600; margin-bottom: 4px; }
-    .day-booking-item .dbi-service { color: var(--yellow); font-size: 0.8rem; margin-bottom: 6px; }
-    .day-booking-item .dbi-contact { color: var(--text-muted); font-size: 0.8rem; display: flex; gap: 12px; flex-wrap: wrap; }
-
-    /* Gallery */
-    .gallery-admin-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .btn-upload {
-      padding: 10px 20px;
-      background: var(--yellow);
-      color: #000;
-      border: none;
-      border-radius: 25px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .btn-upload:hover { background: #e6c800; transform: translateY(-1px); }
-    #photoUploadInput { display: none; }
-
-    .gallery-admin-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 12px;
-    }
-    .ga-item {
-      position: relative;
-      border-radius: 10px;
-      overflow: hidden;
-      aspect-ratio: 4/3;
-      border: 1px solid var(--border);
-      transition: border-color 0.2s;
-    }
-    .ga-item:hover { border-color: rgba(255,255,255,0.2); }
-    .ga-item img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .ga-item.hidden-img img { opacity: 0.25; filter: grayscale(1); }
-    .ga-item-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.55);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .ga-item:hover .ga-item-overlay { opacity: 1; }
-    .ga-btn {
-      width: 34px; height: 34px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.3);
-      background: rgba(0,0,0,0.5);
-      color: #fff;
-      cursor: pointer;
-      font-size: 0.85rem;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .ga-btn:hover { background: rgba(255,255,255,0.15); }
-    .ga-btn.del { border-color: rgba(255,77,77,0.5); color: var(--red); }
-    .ga-btn.del:hover { background: rgba(255,77,77,0.2); }
-    .ga-hidden-badge {
-      position: absolute;
-      top: 6px; left: 6px;
-      background: rgba(0,0,0,0.7);
-      color: rgba(255,255,255,0.5);
-      font-size: 0.65rem;
-      padding: 2px 7px;
-      border-radius: 10px;
-      display: none;
-    }
-    .ga-item.hidden-img .ga-hidden-badge { display: block; }
-    .ga-extra-badge {
-      position: absolute;
-      top: 6px; right: 6px;
-      background: var(--yellow-dim);
-      color: var(--yellow);
-      font-size: 0.65rem;
-      padding: 2px 7px;
-      border-radius: 10px;
-    }
-
-    /* Settings */
-    .settings-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-    .settings-section h3 {
-      font-size: 1rem;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 10px;
-      color: var(--yellow);
-    }
-    .settings-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    .settings-row label {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      min-width: 180px;
-    }
-    .settings-input {
-      flex: 1;
-      min-width: 160px;
-      max-width: 280px;
-      padding: 10px 14px;
-      background: #0d0d0d;
-      border: 1px solid #2a2a2a;
-      border-radius: 9px;
-      color: #fff;
-      font-size: 0.95rem;
-      transition: border-color 0.2s;
-    }
-    .settings-input:focus { outline: none; border-color: var(--yellow); }
-    .btn-save {
-      padding: 10px 22px;
-      background: var(--yellow);
-      color: #000;
-      border: none;
-      border-radius: 25px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-save:hover { background: #e6c800; }
-    .save-msg {
-      font-size: 0.85rem;
-      color: var(--green);
-      display: none;
-      margin-left: 8px;
-    }
-
-    /* Danger zone */
-    .danger-zone {
-      background: rgba(255,77,77,0.05);
-      border: 1px solid rgba(255,77,77,0.15);
-      border-radius: 14px;
-      padding: 20px 24px;
-      margin-bottom: 20px;
-    }
-    .danger-zone h3 {
-      font-size: 0.95rem;
-      color: var(--red);
-      margin-bottom: 12px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .btn-danger {
-      padding: 9px 18px;
-      background: rgba(255,77,77,0.1);
-      border: 1px solid rgba(255,77,77,0.3);
-      color: var(--red);
-      border-radius: 8px;
-      font-size: 0.88rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-danger:hover { background: rgba(255,77,77,0.2); }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 28px;
-      right: 24px;
-      background: #1a1a1a;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 20px;
-      font-size: 0.9rem;
-      z-index: 9999;
-      transform: translateY(80px);
-      opacity: 0;
-      transition: all 0.3s;
-      max-width: 320px;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.success { border-color: rgba(46,204,113,0.4); color: var(--green); }
-    .toast.error { border-color: rgba(255,77,77,0.4); color: var(--red); }
-
-    /* Modal confirm */
-    .confirm-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 9998;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
-      padding: 20px;
-    }
-    .confirm-overlay.active { opacity: 1; pointer-events: all; }
-    .confirm-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px 24px;
-      max-width: 360px;
-      width: 100%;
-      text-align: center;
-    }
-    .confirm-box h3 { margin-bottom: 10px; font-size: 1.1rem; }
-    .confirm-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
-    .confirm-btns { display: flex; gap: 12px; justify-content: center; }
-    .confirm-yes { padding: 10px 24px; background: var(--red); border: none; border-radius: 25px; color: #fff; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-    .confirm-no { padding: 10px 24px; background: transparent; border: 1px solid var(--border); border-radius: 25px; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
-
-    @media (max-width: 700px) {
-      .admin-content { padding: 20px 14px; }
-      .booking-card { grid-template-columns: auto 1fr; }
-      .booking-actions-col { grid-column: 1 / -1; justify-content: flex-start; }
-      .admin-header h2 { display: none; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 480px) {
-      .login-card { padding: 32px 22px 28px; }
-      .admin-header { padding: 12px 16px; }
-    }
+    *{box-sizing:border-box}
+    body{background:#080808;color:#fff;font-family:'Inter',sans-serif;margin:0;min-height:100vh}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:#111}
+    ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:#3a3a3a}
+    .card{background:#111;border:1px solid #1e1e1e;border-radius:14px}
+    .input{background:#161616;border:1px solid #252525;color:#fff;border-radius:9px;padding:10px 13px;width:100%;outline:none;font-family:inherit;font-size:14px;transition:border-color .15s}
+    .input:focus{border-color:#ffde00}
+    .input::placeholder{color:#444}
+    select.input option{background:#161616}
+    .btn{display:inline-flex;align-items:center;gap:7px;font-family:inherit;font-size:14px;font-weight:600;border:none;border-radius:9px;padding:9px 16px;cursor:pointer;transition:all .15s;white-space:nowrap}
+    .btn-brand{background:#ffde00;color:#000}.btn-brand:hover{background:#c9af00}
+    .btn-ghost{background:transparent;color:#aaa;border:1px solid #222}.btn-ghost:hover{border-color:#3a3a3a;color:#fff}
+    .btn-red{background:#ef4444;color:#fff}.btn-red:hover{background:#dc2626}
+    .btn-green{background:#22c55e;color:#000}.btn-green:hover{background:#16a34a}
+    .btn-blue{background:#3b82f6;color:#fff}.btn-blue:hover{background:#2563eb}
+    .btn-sm{padding:6px 12px;font-size:13px}
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+    .nav-link{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:10px;cursor:pointer;transition:all .15s;font-size:14px;font-weight:500;color:#888;user-select:none}
+    .nav-link:hover{background:rgba(255,222,0,.07);color:#ccc}
+    .nav-link.active{background:rgba(255,222,0,.13);color:#ffde00}
+    .nav-link.active i{color:#ffde00}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px}
+    .modal{background:#111;border:1px solid #222;border-radius:16px;width:100%;max-width:540px;max-height:92vh;overflow-y:auto}
+    .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast-item{background:#161616;border:1px solid #2a2a2a;border-radius:11px;padding:12px 16px;display:flex;align-items:center;gap:10px;pointer-events:all;min-width:240px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:tin .2s ease}
+    @keyframes tin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes fin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .fade-in{animation:fin .2s ease}
+    .divider{height:1px;background:#1a1a1a;margin:6px 0}
+    .stat-card{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:22px 24px;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,222,0,.04) 0%,transparent 60%);pointer-events:none}
+    textarea.input{resize:vertical;min-height:80px}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13.5px}
+    th{text-align:left;padding:11px 14px;color:#555;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #1a1a1a}
+    td{padding:12px 14px;border-bottom:1px solid #141414;vertical-align:middle}
+    tr:hover td{background:rgba(255,255,255,.02)}
+    .star{color:#ffde00;font-size:13px}
+    .star.empty{color:#2a2a2a}
+    .pill-filter{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid #1e1e1e;background:#111;color:#777;transition:all .15s}
+    .pill-filter:hover{border-color:#2e2e2e;color:#ccc}
+    .pill-filter.active{background:rgba(255,222,0,.12);border-color:rgba(255,222,0,.3);color:#ffde00}
+    .img-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px;display:block}
+    .sidebar-mobile-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:30;backdrop-filter:blur(2px)}
   </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useContext, createContext, useCallback } = React;
 
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div class="login-card">
-    <img src="logo2.5.jpg" alt="Logo" class="login-logo">
-    <h1>Panel de Administración</h1>
-    <p>Morrey Detailing</p>
-    <div class="login-group">
-      <input type="password" id="loginPw" placeholder="Contraseña" autocomplete="current-password">
-      <button class="toggle-pw" onclick="togglePw()" aria-label="Ver contraseña">
-        <i class="fas fa-eye" id="pwEyeIcon"></i>
-      </button>
-    </div>
-    <button class="login-btn" onclick="doLogin()"><i class="fas fa-lock-open"></i> Ingresar</button>
-    <p class="login-error" id="loginError"><i class="fas fa-exclamation-circle"></i> Contraseña incorrecta</p>
-  </div>
-</div>
+// ═══════════════════════════════════════════
+//  STORAGE & UTILS
+// ═══════════════════════════════════════════
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const load = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } };
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const today = () => new Date().toISOString().slice(0, 10);
+const fmtDate = d => { if (!d) return '—'; const [y,m,dy] = d.split('-'); return `${dy}/${m}/${y}`; };
+const fmtDateLong = d => { if (!d) return '—'; const dt = new Date(d+'T12:00:00'); return dt.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); };
 
-<!-- DASHBOARD -->
-<div id="dashboard">
-  <header class="admin-header">
-    <div class="admin-header-left">
-      <img src="logo2.5.jpg" alt="Logo" class="admin-header-logo">
-      <h2>Panel Admin</h2>
-    </div>
-    <div class="admin-header-right">
-      <a href="index.html" class="btn-site" target="_blank"><i class="fas fa-external-link-alt"></i> Ver sitio</a>
-      <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
-    </div>
-  </header>
+// ═══════════════════════════════════════════
+//  STATUS DEFINITIONS
+// ═══════════════════════════════════════════
+const STATUS = {
+  pending:    { label:'Pendiente',   cls:'bg-yellow-500/15 text-yellow-400 border border-yellow-500/25', dot:'bg-yellow-400' },
+  confirmed:  { label:'Confirmado',  cls:'bg-green-500/15 text-green-400 border border-green-500/25',   dot:'bg-green-400' },
+  in_progress:{ label:'En proceso',  cls:'bg-blue-500/15 text-blue-400 border border-blue-500/25',      dot:'bg-blue-400' },
+  completed:  { label:'Finalizado',  cls:'bg-purple-500/15 text-purple-400 border border-purple-500/25',dot:'bg-purple-400' },
+  cancelled:  { label:'Cancelado',   cls:'bg-red-500/15 text-red-400 border border-red-500/25',         dot:'bg-red-400' },
+};
 
-  <nav class="admin-tabs">
-    <button class="tab-btn active" onclick="switchTab('turnos', this)">
-      <i class="fas fa-calendar-check"></i> Turnos
-    </button>
-    <button class="tab-btn" onclick="switchTab('calendario', this)">
-      <i class="fas fa-calendar-alt"></i> Calendario
-    </button>
-    <button class="tab-btn" onclick="switchTab('galeria', this)">
-      <i class="fas fa-images"></i> Galería
-    </button>
-    <button class="tab-btn" onclick="switchTab('ajustes', this)">
-      <i class="fas fa-cog"></i> Ajustes
-    </button>
-  </nav>
+// ═══════════════════════════════════════════
+//  DEFAULTS
+// ═══════════════════════════════════════════
+const ICONS = ['fa-car-side','fa-couch','fa-cog','fa-sun','fa-shield-alt','fa-gem','fa-lightbulb','fa-spray-can','fa-water','fa-star','fa-wrench','fa-paint-brush'];
 
-  <main class="admin-content">
+const DEFAULT_SERVICES = [
+  {id:uid(),name:'Lavado Detallado Premium',desc:'Limpieza exterior e interior completa con productos premium.',price:'',duration:'2-3 hs',icon:'fa-car-side',active:true},
+  {id:uid(),name:'Limpieza de Tapizados',desc:'Extracción profunda de suciedad en telas y cueros.',price:'',duration:'2-4 hs',icon:'fa-couch',active:true},
+  {id:uid(),name:'Limpieza de Motor',desc:'Desengrasado y limpieza del compartimento motor.',price:'',duration:'1-2 hs',icon:'fa-cog',active:true},
+  {id:uid(),name:'Abrillantado',desc:'Pulido y abrillantado para eliminar rayones leves.',price:'',duration:'3-5 hs',icon:'fa-sun',active:true},
+  {id:uid(),name:'Tratamiento Acrílico',desc:'Protección con capa acrílica para mayor durabilidad.',price:'',duration:'4-6 hs',icon:'fa-shield-alt',active:true},
+  {id:uid(),name:'Tratamiento Cerámico',desc:'Nano cerámica de alta duración y brillo extremo.',price:'',duration:'6-8 hs',icon:'fa-gem',active:true},
+  {id:uid(),name:'Restauración de Ópticas',desc:'Pulido y restauración de faros opacos y amarillos.',price:'',duration:'1-2 hs',icon:'fa-lightbulb',active:true},
+];
 
-    <!-- TAB: TURNOS -->
-    <div id="tab-turnos" class="tab-panel active">
-      <div class="stats-grid" id="statsGrid"></div>
-      <div class="filter-row" id="filterRow">
-        <button class="filter-btn active" onclick="setFilter('all', this)">Todos</button>
-        <button class="filter-btn" onclick="setFilter('pending', this)">Pendientes</button>
-        <button class="filter-btn" onclick="setFilter('confirmed', this)">Confirmados</button>
-        <button class="filter-btn" onclick="setFilter('cancelled', this)">Cancelados</button>
-        <button class="filter-btn" onclick="setFilter('upcoming', this)">Próximos</button>
-      </div>
-      <div class="bookings-list" id="bookingsList"></div>
-    </div>
+const DEFAULT_CONFIG = {
+  whatsapp:'5491156359321',
+  instagram:'morreydetailing',
+  maxPerDay:4,
+  availableDays:[1,2,3,4,5,6],
+  weekdayStart:'09:00',weekdayEnd:'17:00',
+  saturdayStart:'09:00',saturdayEnd:'13:00',
+  reminderMsg:'Te recordamos tu turno mañana a las [hora]. ¡Te esperamos! — Morrey Detailing',
+  confirmMsg:'Hola [nombre], tu turno está confirmado para el [dia] a las [hora]. ¡Gracias por elegirnos! — Morrey Detailing',
+};
 
-    <!-- TAB: CALENDARIO -->
-    <div id="tab-calendario" class="tab-panel">
-      <div class="cal-admin-wrap">
-        <div class="admin-cal-box">
-          <div class="admin-cal-header">
-            <button class="acal-nav" onclick="acalNav(-1)">&#8249;</button>
-            <h3 id="acalTitle"></h3>
-            <button class="acal-nav" onclick="acalNav(1)">&#8250;</button>
+// ═══════════════════════════════════════════
+//  TOAST CONTEXT
+// ═══════════════════════════════════════════
+const ToastCtx = createContext(null);
+function ToastProvider({children}) {
+  const [toasts, setToasts] = useState([]);
+  const add = useCallback((msg, type='success') => {
+    const id = uid();
+    setToasts(p => [...p, {id, msg, type}]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3500);
+  }, []);
+  const icons = {success:'fa-check-circle text-green-400', error:'fa-times-circle text-red-400', info:'fa-info-circle text-blue-400', warning:'fa-exclamation-circle text-yellow-400'};
+  return (
+    <ToastCtx.Provider value={add}>
+      {children}
+      <div className="toast-wrap">
+        {toasts.map(t => (
+          <div key={t.id} className="toast-item">
+            <i className={`fas ${icons[t.type]||icons.info} text-lg`}></i>
+            <span className="text-sm text-gray-200">{t.msg}</span>
+            <button onClick={() => setToasts(p=>p.filter(x=>x.id!==t.id))} className="ml-auto text-gray-600 hover:text-gray-300 text-lg leading-none">&times;</button>
           </div>
-          <div class="admin-cal-weekdays">
-            <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
-          </div>
-          <div class="admin-cal-grid" id="acalGrid"></div>
-        </div>
-        <div class="day-detail-box">
-          <h4 id="dayDetailTitle">Seleccioná un día</h4>
-          <div id="dayDetailList"></div>
-        </div>
+        ))}
       </div>
-    </div>
-
-    <!-- TAB: GALERÍA -->
-    <div id="tab-galeria" class="tab-panel">
-      <div class="gallery-admin-header">
-        <div>
-          <h3 style="font-size:1rem; margin-bottom:4px;">Gestión de Galería</h3>
-          <p style="color:var(--text-muted); font-size:0.85rem;" id="galleryStats">Cargando...</p>
-        </div>
-        <button class="btn-upload" onclick="document.getElementById('photoUploadInput').click()">
-          <i class="fas fa-plus"></i> Subir foto
-        </button>
-        <input type="file" id="photoUploadInput" accept="image/*" multiple onchange="handlePhotoUpload(this)">
-      </div>
-      <div class="gallery-admin-grid" id="galleryAdminGrid"></div>
-    </div>
-
-    <!-- TAB: AJUSTES -->
-    <div id="tab-ajustes" class="tab-panel">
-
-      <div class="settings-section">
-        <h3><i class="fas fa-lock"></i> Cambiar contraseña</h3>
-        <div class="settings-row">
-          <label>Contraseña actual</label>
-          <input type="password" id="pwCurrent" class="settings-input" placeholder="Contraseña actual">
-        </div>
-        <div class="settings-row">
-          <label>Nueva contraseña</label>
-          <input type="password" id="pwNew" class="settings-input" placeholder="Nueva contraseña">
-        </div>
-        <div class="settings-row">
-          <label>Confirmar nueva contraseña</label>
-          <input type="password" id="pwConfirm" class="settings-input" placeholder="Repetir contraseña">
-        </div>
-        <button class="btn-save" onclick="changePassword()">Guardar contraseña</button>
-        <span class="save-msg" id="pwSaveMsg">✓ Contraseña actualizada</span>
-      </div>
-
-      <div class="settings-section">
-        <h3><i class="fas fa-calendar-day"></i> Configuración de turnos</h3>
-        <div class="settings-row">
-          <label>Máximo de turnos por día</label>
-          <input type="number" id="maxPerDay" class="settings-input" min="1" max="20" value="4" style="max-width:100px">
-        </div>
-        <button class="btn-save" onclick="saveBookingConfig()">Guardar</button>
-        <span class="save-msg" id="configSaveMsg">✓ Guardado</span>
-      </div>
-
-      <div class="danger-zone">
-        <h3><i class="fas fa-exclamation-triangle"></i> Zona peligrosa</h3>
-        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">
-          Estas acciones no se pueden deshacer.
-        </p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn-danger" onclick="confirmAction('Eliminar todos los turnos cancelados', deleteCancelled)">
-            Eliminar cancelados
-          </button>
-          <button class="btn-danger" onclick="confirmAction('Eliminar TODOS los turnos (permanente)', deleteAllBookings)">
-            Borrar todos los turnos
-          </button>
-          <button class="btn-danger" onclick="confirmAction('Restaurar galería (quitar imágenes ocultas y extras)', resetGallery)">
-            Restaurar galería
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </main>
-</div>
-
-<!-- Confirm modal -->
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <h3 id="confirmTitle">¿Estás seguro?</h3>
-    <p id="confirmMsg">Esta acción no se puede deshacer.</p>
-    <div class="confirm-btns">
-      <button class="confirm-no" onclick="closeConfirm()">Cancelar</button>
-      <button class="confirm-yes" id="confirmYes">Confirmar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
-
-<script>
-// =============================================
-// DATA
-// =============================================
-
-const DEFAULT_PASSWORD = 'morrey2025';
-const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const MONTH_SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-const KNOWN_IMAGES = Array.from({length: 34}, (_, i) => `${i + 1}.jpg`);
-
-function getBookings() {
-  try { return JSON.parse(localStorage.getItem('morrey_bookings') || '[]'); } catch { return []; }
+    </ToastCtx.Provider>
+  );
 }
-function saveBookings(b) { localStorage.setItem('morrey_bookings', JSON.stringify(b)); }
+const useToast = () => useContext(ToastCtx);
 
-function getPassword() {
-  return localStorage.getItem('morrey_admin_pw') || DEFAULT_PASSWORD;
-}
-
-function getHidden() {
-  try { return JSON.parse(localStorage.getItem('morrey_hidden_gallery') || '[]'); } catch { return []; }
-}
-function saveHidden(h) { localStorage.setItem('morrey_hidden_gallery', JSON.stringify(h)); }
-
-function getExtras() {
-  try { return JSON.parse(localStorage.getItem('morrey_extra_gallery') || '[]'); } catch { return []; }
-}
-function saveExtras(e) { localStorage.setItem('morrey_extra_gallery', JSON.stringify(e)); }
-
-// =============================================
-// LOGIN
-// =============================================
-
-function togglePw() {
-  const inp = document.getElementById('loginPw');
-  const icon = document.getElementById('pwEyeIcon');
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    icon.className = 'fas fa-eye-slash';
-  } else {
-    inp.type = 'password';
-    icon.className = 'fas fa-eye';
-  }
-}
-
-function doLogin() {
-  const pw = document.getElementById('loginPw').value;
-  if (pw === getPassword()) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'flex';
-    initDashboard();
-  } else {
-    document.getElementById('loginError').style.display = 'block';
-    document.getElementById('loginPw').style.borderColor = 'var(--red)';
-    setTimeout(() => {
-      document.getElementById('loginPw').style.borderColor = '';
-    }, 2000);
-  }
-}
-
-document.getElementById('loginPw').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
-
-function doLogout() {
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('loginPw').value = '';
-  document.getElementById('loginError').style.display = 'none';
-}
-
-// =============================================
-// TABS
-// =============================================
-
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
-
-  if (name === 'turnos') renderBookings();
-  if (name === 'calendario') renderAdminCal();
-  if (name === 'galeria') renderGalleryAdmin();
-  if (name === 'ajustes') initAjustes();
-}
-
-// =============================================
-// INIT
-// =============================================
-
-let currentFilter = 'all';
-let acalYear, acalMonth, acalSelectedDate;
-
-function initDashboard() {
-  currentFilter = 'all';
-  const now = new Date();
-  acalYear = now.getFullYear();
-  acalMonth = now.getMonth();
-  acalSelectedDate = null;
-  renderBookings();
-}
-
-// =============================================
-// TURNOS TAB
-// =============================================
-
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('#filterRow .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderBookings();
-}
-
-function renderBookings() {
-  const all = getBookings();
-  const today = new Date(); today.setHours(0,0,0,0);
-  const todayStr = toDateStr(today);
-
-  // Stats
-  const total = all.length;
-  const pending = all.filter(b => b.status === 'pending').length;
-  const confirmed = all.filter(b => b.status === 'confirmed').length;
-  const todayCount = all.filter(b => b.date === todayStr && b.status !== 'cancelled').length;
-
-  document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Total turnos</div>
-      <div class="stat-value">${total}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Pendientes</div>
-      <div class="stat-value" style="color:var(--orange)">${pending}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Confirmados</div>
-      <div class="stat-value" style="color:var(--green)">${confirmed}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Hoy</div>
-      <div class="stat-value">${todayCount}</div>
-      <div class="stat-sub">${todayStr}</div>
-    </div>
-  `;
-
-  // Filter
-  let filtered = [...all];
-  if (currentFilter === 'pending') filtered = all.filter(b => b.status === 'pending');
-  else if (currentFilter === 'confirmed') filtered = all.filter(b => b.status === 'confirmed');
-  else if (currentFilter === 'cancelled') filtered = all.filter(b => b.status === 'cancelled');
-  else if (currentFilter === 'upcoming') {
-    filtered = all.filter(b => b.date >= todayStr && b.status !== 'cancelled');
-  }
-
-  // Sort by date
-  filtered.sort((a, b) => a.date.localeCompare(b.date));
-
-  const list = document.getElementById('bookingsList');
-  if (!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-times"></i><p>No hay turnos en esta categoría</p></div>`;
-    return;
-  }
-
-  list.innerHTML = filtered.map(b => {
-    const [y, m, d] = b.date.split('-').map(Number);
-    const statusLabel = { pending: 'Pendiente', confirmed: 'Confirmado', cancelled: 'Cancelado' }[b.status] || b.status;
-    const statusClass = b.status;
-    return `
-      <div class="booking-card status-${b.status}" id="bcard-${b.id}">
-        <div class="booking-date-box">
-          <div class="bdb-day">${d}</div>
-          <div class="bdb-month">${MONTH_SHORT[m-1]}</div>
-        </div>
-        <div class="booking-info">
-          <span class="bi-service">${escHtml(b.service)}</span>
-          <h4>${escHtml(b.name)}</h4>
-          <div class="bi-contact">
-            <span><i class="fas fa-phone"></i> ${escHtml(b.phone)}</span>
-            <span><i class="fas fa-envelope"></i> ${escHtml(b.email)}</span>
-            <span class="badge-status ${statusClass}">${statusLabel}</span>
+// ═══════════════════════════════════════════
+//  CONFIRM DIALOG
+// ═══════════════════════════════════════════
+const ConfirmCtx = createContext(null);
+function ConfirmProvider({children}) {
+  const [state, setState] = useState(null);
+  const confirm = useCallback((msg, onOk, opts={}) => setState({msg, onOk, opts}), []);
+  const close = () => setState(null);
+  return (
+    <ConfirmCtx.Provider value={confirm}>
+      {children}
+      {state && (
+        <div className="modal-bg" onClick={close}>
+          <div className="card p-6 max-w-xs w-full text-center fade-in" onClick={e=>e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center mx-auto mb-4">
+              <i className="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+            </div>
+            <p className="text-sm text-gray-300 mb-5 leading-relaxed">{state.msg}</p>
+            <div className="flex gap-3 justify-center">
+              <button className="btn btn-ghost flex-1" onClick={close}>Cancelar</button>
+              <button className="btn btn-red flex-1" onClick={() => { state.onOk(); close(); }}>{state.opts.label||'Eliminar'}</button>
+            </div>
           </div>
         </div>
-        <div class="booking-actions-col">
-          ${b.status !== 'confirmed' && b.status !== 'cancelled' ? `<button class="ba-btn confirm" onclick="confirmAndNotify('${b.id}')"><i class="fas fa-check"></i> Confirmar</button>` : ''}
-          <a href="${buildClientWA(b)}" target="_blank" rel="noopener noreferrer">
-            <button class="ba-btn wa" title="Enviar WhatsApp al cliente"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-          </a>
-          ${b.status !== 'cancelled' ? `<button class="ba-btn cancel" onclick="updateStatus('${b.id}','cancelled')"><i class="fas fa-times"></i> Cancelar</button>` : ''}
-          <button class="ba-btn delete" onclick="deleteBooking('${b.id}')"><i class="fas fa-trash"></i></button>
+      )}
+    </ConfirmCtx.Provider>
+  );
+}
+const useConfirm = () => useContext(ConfirmCtx);
+
+// ═══════════════════════════════════════════
+//  SHARED COMPONENTS
+// ═══════════════════════════════════════════
+function StatusBadge({status}) {
+  const s = STATUS[status] || STATUS.pending;
+  return <span className={`badge ${s.cls}`}><span className={`w-1.5 h-1.5 rounded-full ${s.dot} inline-block`}></span>{s.label}</span>;
+}
+
+function Stars({n, max=5, onChange}) {
+  return (
+    <div className="flex gap-1">
+      {Array.from({length:max}).map((_,i) => (
+        <i key={i} className={`fas fa-star ${i<n?'star':'star empty'} ${onChange?'cursor-pointer':''}`}
+           onClick={() => onChange && onChange(i+1)}></i>
+      ))}
+    </div>
+  );
+}
+
+function Modal({title, onClose, children, footer}) {
+  useEffect(() => {
+    const fn = e => e.key==='Escape' && onClose();
+    document.addEventListener('keydown', fn);
+    return () => document.removeEventListener('keydown', fn);
+  }, [onClose]);
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal fade-in" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-[#1e1e1e]">
+          <h3 className="font-semibold text-base">{title}</h3>
+          <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 transition-colors" onClick={onClose}>
+            <i className="fas fa-times"></i>
+          </button>
         </div>
+        <div className="p-5">{children}</div>
+        {footer && <div className="p-5 border-t border-[#1e1e1e] flex justify-end gap-3">{footer}</div>}
       </div>
-    `;
-  }).join('');
+    </div>
+  );
 }
 
-// Formatea el número del cliente para wa.me (Argentina)
-function formatWAPhone(phone) {
-  const digits = (phone || '').replace(/\D/g, '');
-  if (digits.startsWith('54')) return digits;
-  if (digits.startsWith('0'))  return '54' + digits.slice(1);
-  return '54' + digits;
+function EmptyState({icon, title, desc, action}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+      <div className="w-14 h-14 rounded-2xl bg-white/4 flex items-center justify-center mb-4">
+        <i className={`fas ${icon} text-2xl text-gray-600`}></i>
+      </div>
+      <p className="font-semibold text-gray-400 mb-1">{title}</p>
+      <p className="text-sm text-gray-600 mb-5">{desc}</p>
+      {action}
+    </div>
+  );
 }
 
-// Genera el link de WA al cliente con mensaje personalizable
-function buildClientWA(b) {
-  const phone = formatWAPhone(b.phone);
-  const [y, m, d] = (b.date || '--').split('-');
-  const msg = `Hola ${b.name}! Te confirmamos tu turno en Morrey Detailing 🚗✨\n\n📋 Servicio: ${b.service}\n📅 Fecha: ${d}/${m}/${y}\n🕐 Horario: ${b.time} hs\n\n¡Te esperamos! Cualquier duda escribinos.`;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+function FormField({label, children, required}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}{required&&<span className="text-brand ml-1">*</span>}</label>
+      {children}
+    </div>
+  );
 }
 
-// Confirma el turno Y abre WA al cliente
-function confirmAndNotify(id) {
-  const bookings = getBookings();
-  const idx = bookings.findIndex(b => b.id === id);
-  if (idx < 0) return;
-  bookings[idx].status = 'confirmed';
-  saveBookings(bookings);
-  renderBookings();
-  showToast('✓ Turno confirmado', 'success');
-  // Abrir WhatsApp al cliente
-  setTimeout(() => window.open(buildClientWA(bookings[idx]), '_blank'), 400);
+function PageHeader({title, subtitle, action}) {
+  return (
+    <div className="flex items-start justify-between gap-4 mb-6">
+      <div>
+        <h1 className="text-xl font-bold">{title}</h1>
+        {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+      </div>
+      {action}
+    </div>
+  );
 }
 
-function updateStatus(id, status) {
-  const bookings = getBookings();
-  const idx = bookings.findIndex(b => b.id === id);
-  if (idx < 0) return;
-  bookings[idx].status = status;
-  saveBookings(bookings);
-  renderBookings();
-  showToast(status === 'confirmed' ? '✓ Turno confirmado' : 'Turno cancelado', status === 'confirmed' ? 'success' : '');
+// ═══════════════════════════════════════════
+//  TIME SLOTS
+// ═══════════════════════════════════════════
+function getTimeSlots(dateStr, config) {
+  if (!dateStr) return [];
+  const dt = new Date(dateStr + 'T12:00:00');
+  const dow = dt.getDay();
+  if (!config.availableDays.includes(dow)) return [];
+  const isSat = dow === 6;
+  const start = isSat ? config.saturdayStart : config.weekdayStart;
+  const end   = isSat ? config.saturdayEnd   : config.weekdayEnd;
+  const slots = [];
+  let [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  while (sh * 60 + sm < eh * 60 + em) {
+    slots.push(`${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`);
+    sm += 60; if (sm >= 60) { sh++; sm -= 60; }
+  }
+  return slots;
 }
 
-function deleteBooking(id) {
-  confirmAction('Eliminar este turno', () => {
-    const bookings = getBookings().filter(b => b.id !== id);
-    saveBookings(bookings);
-    renderBookings();
-    showToast('Turno eliminado');
-  });
-}
+// ═══════════════════════════════════════════
+//  LOGIN PAGE
+// ═══════════════════════════════════════════
+function LoginPage({onLogin}) {
+  const [pw, setPw] = useState('');
+  const [show, setShow] = useState(false);
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
-// =============================================
-// CALENDARIO TAB
-// =============================================
-
-function acalNav(dir) {
-  acalMonth += dir;
-  if (acalMonth < 0) { acalMonth = 11; acalYear--; }
-  if (acalMonth > 11) { acalMonth = 0; acalYear++; }
-  renderAdminCal();
-}
-
-function renderAdminCal() {
-  const title = document.getElementById('acalTitle');
-  const grid = document.getElementById('acalGrid');
-  if (!title || !grid) return;
-
-  title.textContent = `${MONTH_NAMES[acalMonth]} ${acalYear}`;
-
-  const today = new Date(); today.setHours(0,0,0,0);
-  const bookings = getBookings();
-
-  // Count bookings per date
-  const countMap = {};
-  bookings.forEach(b => {
-    if (b.status !== 'cancelled') {
-      countMap[b.date] = (countMap[b.date] || 0) + 1;
+  const submit = (e) => {
+    e.preventDefault();
+    const stored = load('morrey_admin_pw', 'morrey2025');
+    if (pw === stored) {
+      setLoading(true);
+      setTimeout(() => { onLogin(); toast('Bienvenido al panel admin', 'success'); }, 500);
+    } else {
+      setErr('Contraseña incorrecta');
+      setTimeout(() => setErr(''), 2000);
     }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background:'radial-gradient(ellipse at 50% 0%,rgba(255,222,0,.06) 0%,transparent 60%)'}}>
+      <div className="card p-8 w-full max-w-sm text-center fade-in" style={{border:'1px solid rgba(255,222,0,.15)'}}>
+        <img src="logo.jpg" alt="Morrey Detailing" className="h-16 w-auto object-contain mx-auto mb-5 rounded-lg" />
+        <h1 className="text-lg font-bold mb-1">Panel Administrativo</h1>
+        <p className="text-sm text-gray-500 mb-7">Morrey Detailing</p>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <div className="relative">
+            <input className="input pr-10" type={show?'text':'password'} placeholder="Contraseña" value={pw}
+              onChange={e=>{setPw(e.target.value);setErr('')}} autoFocus />
+            <button type="button" onClick={()=>setShow(!show)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+              <i className={`fas ${show?'fa-eye-slash':'fa-eye'} text-sm`}></i>
+            </button>
+          </div>
+          {err && <p className="text-red-400 text-xs -mt-2">{err}</p>}
+          <button type="submit" className="btn btn-brand justify-center py-2.5" disabled={loading}>
+            {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <><i className="fas fa-sign-in-alt"></i> Ingresar</>}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════
+function Dashboard({bookings, clients, services}) {
+  const todayStr = today();
+  const todayBookings = bookings.filter(b => b.date === todayStr);
+  const weekBookings = bookings.filter(b => {
+    if (!b.date) return false;
+    const d = new Date(b.date+'T12:00:00'); const now = new Date();
+    const start = new Date(now); start.setDate(now.getDate() - now.getDay() + 1);
+    const end = new Date(start); end.setDate(start.getDate() + 6);
+    return d >= start && d <= end;
   });
+  const pending = bookings.filter(b => b.status === 'pending').length;
+  const vips = clients.filter(c => c.isVIP).length;
 
-  const firstDow = new Date(acalYear, acalMonth, 1).getDay();
-  const daysInMonth = new Date(acalYear, acalMonth + 1, 0).getDate();
+  const svcCount = {};
+  bookings.forEach(b => { svcCount[b.service] = (svcCount[b.service]||0) + 1; });
+  const topSvc = Object.entries(svcCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
-  grid.innerHTML = '';
+  const upcoming = bookings
+    .filter(b => b.date >= todayStr && b.status !== 'cancelled')
+    .sort((a,b) => (a.date+a.time) > (b.date+b.time) ? 1 : -1)
+    .slice(0, 5);
 
-  for (let i = 0; i < firstDow; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'acal-cell empty';
-    grid.appendChild(empty);
-  }
+  const stats = [
+    {icon:'fa-calendar-day', label:'Turnos hoy', value:todayBookings.length, sub:`${todayBookings.filter(b=>b.status==='confirmed').length} confirmados`, color:'text-brand', bg:'bg-brand/10'},
+    {icon:'fa-calendar-week', label:'Esta semana', value:weekBookings.length, sub:`${weekBookings.filter(b=>b.status==='pending').length} pendientes`, color:'text-blue-400', bg:'bg-blue-400/10'},
+    {icon:'fa-users', label:'Clientes', value:clients.length, sub:`${vips} VIP`, color:'text-purple-400', bg:'bg-purple-400/10'},
+    {icon:'fa-clock', label:'Por confirmar', value:pending, sub:'turnos pendientes', color:'text-orange-400', bg:'bg-orange-400/10'},
+  ];
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(acalYear, acalMonth, d);
-    const dateStr = `${acalYear}-${String(acalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const count = countMap[dateStr] || 0;
-    const isPast = date < today;
+  return (
+    <div className="fade-in space-y-6">
+      <div>
+        <h1 className="text-xl font-bold">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+      </div>
 
-    const cell = document.createElement('div');
-    cell.className = 'acal-cell';
-    if (date.getTime() === today.getTime()) cell.classList.add('today');
-    if (isPast) cell.classList.add('past');
-    if (acalSelectedDate === dateStr) cell.classList.add('selected');
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s,i) => (
+          <div key={i} className="stat-card">
+            <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
+              <i className={`fas ${s.icon} ${s.color}`}></i>
+            </div>
+            <div className="text-2xl font-bold mb-0.5">{s.value}</div>
+            <div className="text-xs font-semibold text-gray-400">{s.label}</div>
+            <div className="text-xs text-gray-600 mt-0.5">{s.sub}</div>
+          </div>
+        ))}
+      </div>
 
-    cell.innerHTML = `<span>${d}</span>`;
-    if (count > 0) {
-      const badge = document.createElement('span');
-      badge.className = `acal-count c${Math.min(count, 3)}`;
-      badge.textContent = count;
-      cell.appendChild(badge);
-    }
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* Próximos turnos */}
+        <div className="card p-5 lg:col-span-3">
+          <h2 className="font-semibold text-sm text-gray-300 mb-4 flex items-center gap-2">
+            <i className="fas fa-calendar-alt text-brand"></i> Próximos turnos
+          </h2>
+          {upcoming.length === 0 ? (
+            <p className="text-sm text-gray-600 text-center py-6">No hay turnos próximos</p>
+          ) : (
+            <div className="space-y-2">
+              {upcoming.map(b => (
+                <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/2 hover:bg-white/4 transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-brand/10 flex-shrink-0 flex items-center justify-center">
+                    <i className="fas fa-user text-brand text-xs"></i>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold truncate">{b.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{b.service}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-xs font-semibold text-gray-300">{fmtDate(b.date)}</div>
+                    {b.time && <div className="text-xs text-gray-600">{b.time}</div>}
+                  </div>
+                  <StatusBadge status={b.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-    cell.addEventListener('click', () => {
-      acalSelectedDate = dateStr;
-      renderAdminCal();
-      showDayDetail(dateStr);
+        {/* Servicios más solicitados */}
+        <div className="card p-5 lg:col-span-2">
+          <h2 className="font-semibold text-sm text-gray-300 mb-4 flex items-center gap-2">
+            <i className="fas fa-chart-bar text-brand"></i> Más solicitados
+          </h2>
+          {topSvc.length === 0 ? (
+            <p className="text-sm text-gray-600 text-center py-6">Sin datos aún</p>
+          ) : (
+            <div className="space-y-3">
+              {topSvc.map(([name, count], i) => {
+                const max = topSvc[0][1];
+                return (
+                  <div key={name}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-gray-400 truncate mr-2">{name}</span>
+                      <span className="text-brand font-bold flex-shrink-0">{count}</span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-brand rounded-full transition-all" style={{width:`${(count/max)*100}%`}}></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="divider mt-5 mb-4"></div>
+          <h2 className="font-semibold text-sm text-gray-300 mb-3 flex items-center gap-2">
+            <i className="fas fa-fire text-orange-400"></i> Estado hoy
+          </h2>
+          {['pending','confirmed','in_progress','completed'].map(s => {
+            const cnt = todayBookings.filter(b=>b.status===s).length;
+            return cnt > 0 ? (
+              <div key={s} className="flex items-center justify-between py-1.5">
+                <StatusBadge status={s} />
+                <span className="text-sm font-bold">{cnt}</span>
+              </div>
+            ) : null;
+          })}
+          {todayBookings.length === 0 && <p className="text-xs text-gray-600">Sin turnos hoy</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  TURNO MODAL (crear / editar)
+// ═══════════════════════════════════════════
+function TurnoModal({turno, onClose, onSave, services, bookings, config}) {
+  const isEdit = !!turno?.id;
+  const [form, setForm] = useState({
+    name:'', phone:'', email:'', vehicle:'', service:'', date:'', time:'', status:'pending', notes:'',
+    ...(turno||{})
+  });
+  const toast = useToast();
+  const set = (k, v) => setForm(p => ({...p, [k]:v}));
+
+  const slots = getTimeSlots(form.date, config);
+  const takenSlots = bookings
+    .filter(b => b.date === form.date && b.status !== 'cancelled' && b.id !== form.id)
+    .map(b => b.time);
+
+  const save = () => {
+    if (!form.name.trim()) return toast('Ingresá el nombre del cliente', 'error');
+    if (!form.service) return toast('Seleccioná un servicio', 'error');
+    if (!form.date) return toast('Seleccioná una fecha', 'error');
+    if (!form.time) return toast('Seleccioná un horario', 'error');
+    onSave({...form, id: form.id||uid(), createdAt: form.createdAt||new Date().toISOString()});
+  };
+
+  const activeServices = services.filter(s => s.active);
+
+  return (
+    <Modal title={isEdit ? 'Editar turno' : 'Nuevo turno'} onClose={onClose}
+      footer={<><button className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-brand" onClick={save}><i className="fas fa-save"></i>{isEdit?'Guardar':'Crear turno'}</button></>}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField label="Nombre" required>
+          <input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Ej: Juan García" />
+        </FormField>
+        <FormField label="Teléfono">
+          <input className="input" value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="Ej: 1156359321" />
+        </FormField>
+        <FormField label="Email">
+          <input className="input" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@ejemplo.com" />
+        </FormField>
+        <FormField label="Vehículo">
+          <input className="input" value={form.vehicle} onChange={e=>set('vehicle',e.target.value)} placeholder="Ej: VW Gol 2019 blanco" />
+        </FormField>
+        <FormField label="Servicio" required>
+          <select className="input" value={form.service} onChange={e=>set('service',e.target.value)}>
+            <option value="">Seleccionar...</option>
+            {activeServices.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+          </select>
+        </FormField>
+        <FormField label="Estado">
+          <select className="input" value={form.status} onChange={e=>set('status',e.target.value)}>
+            {Object.entries(STATUS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </FormField>
+        <FormField label="Fecha" required>
+          <input className="input" type="date" value={form.date} onChange={e=>{set('date',e.target.value);set('time','')}} />
+        </FormField>
+        <FormField label="Horario" required>
+          {slots.length === 0 ? (
+            <div className="input text-gray-600 text-sm">{form.date ? 'Sin turnos disponibles' : 'Elegí una fecha primero'}</div>
+          ) : (
+            <select className="input" value={form.time} onChange={e=>set('time',e.target.value)}>
+              <option value="">Seleccionar...</option>
+              {slots.map(t => (
+                <option key={t} value={t} disabled={takenSlots.includes(t)}>
+                  {t}{takenSlots.includes(t) ? ' — ocupado' : ''}
+                </option>
+              ))}
+            </select>
+          )}
+        </FormField>
+        <div className="sm:col-span-2">
+          <FormField label="Notas internas">
+            <textarea className="input" value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="Observaciones, detalles del trabajo..." />
+          </FormField>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  TURNOS PAGE
+// ═══════════════════════════════════════════
+function TurnosPage({bookings, setBookings, services, config}) {
+  const [filter, setFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState(null); // null | 'new' | turno
+  const toast = useToast();
+  const confirm = useConfirm();
+
+  const filtered = bookings
+    .filter(b => filter==='all' || b.status===filter)
+    .filter(b => !dateFilter || b.date===dateFilter)
+    .filter(b => !search || b.name?.toLowerCase().includes(search.toLowerCase()) || b.phone?.includes(search) || b.vehicle?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b) => (a.date+a.time) > (b.date+b.time) ? -1 : 1);
+
+  const saveTurno = (t) => {
+    setBookings(prev => {
+      const exists = prev.find(b=>b.id===t.id);
+      const next = exists ? prev.map(b=>b.id===t.id?t:b) : [t,...prev];
+      save('morrey_bookings', next);
+      return next;
     });
+    toast(t.id&&bookings.find(b=>b.id===t.id) ? 'Turno actualizado' : 'Turno creado', 'success');
+    setModal(null);
+  };
 
-    grid.appendChild(cell);
-  }
+  const deleteTurno = (id) => {
+    confirm('¿Eliminar este turno? Esta acción no se puede deshacer.', () => {
+      setBookings(prev => { const n=prev.filter(b=>b.id!==id); save('morrey_bookings',n); return n; });
+      toast('Turno eliminado', 'info');
+    });
+  };
 
-  if (acalSelectedDate) showDayDetail(acalSelectedDate);
+  const changeStatus = (id, status) => {
+    setBookings(prev => { const n=prev.map(b=>b.id===id?{...b,status}:b); save('morrey_bookings',n); return n; });
+    toast(`Estado actualizado a "${STATUS[status].label}"`, 'success');
+  };
+
+  const sendWA = (b) => {
+    const cfg = load('morrey_config', DEFAULT_CONFIG);
+    const dayStr = fmtDateLong(b.date);
+    const msg = cfg.confirmMsg
+      .replace('[nombre]', b.name||'')
+      .replace('[dia]', dayStr)
+      .replace('[hora]', b.time||'');
+    const phone = b.phone?.replace(/\D/g,'');
+    window.open(`https://wa.me/54${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const sendReminder = (b) => {
+    const cfg = load('morrey_config', DEFAULT_CONFIG);
+    const msg = cfg.reminderMsg.replace('[hora]', b.time||'');
+    const phone = b.phone?.replace(/\D/g,'');
+    window.open(`https://wa.me/54${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const tabs = [
+    {k:'all',label:'Todos',count:bookings.length},
+    {k:'pending',label:'Pendientes',count:bookings.filter(b=>b.status==='pending').length},
+    {k:'confirmed',label:'Confirmados',count:bookings.filter(b=>b.status==='confirmed').length},
+    {k:'in_progress',label:'En proceso',count:bookings.filter(b=>b.status==='in_progress').length},
+    {k:'completed',label:'Finalizados',count:bookings.filter(b=>b.status==='completed').length},
+    {k:'cancelled',label:'Cancelados',count:bookings.filter(b=>b.status==='cancelled').length},
+  ];
+
+  return (
+    <div className="fade-in space-y-5">
+      <PageHeader title="Gestión de Turnos" subtitle={`${bookings.length} turnos en total`}
+        action={<button className="btn btn-brand" onClick={()=>setModal('new')}><i className="fas fa-plus"></i><span className="hidden sm:inline">Nuevo turno</span></button>} />
+
+      {/* Filters */}
+      <div className="card p-4 space-y-3">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-hide">
+          {tabs.map(t => (
+            <button key={t.k} onClick={()=>setFilter(t.k)} className={`pill-filter flex-shrink-0 ${filter===t.k?'active':''}`}>
+              {t.label}
+              {t.count>0 && <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${filter===t.k?'bg-brand/20 text-brand':'bg-white/5 text-gray-500'}`}>{t.count}</span>}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-sm"></i>
+            <input className="input pl-9" placeholder="Buscar por nombre, teléfono, vehículo..." value={search} onChange={e=>setSearch(e.target.value)} />
+          </div>
+          <input className="input w-40" type="date" value={dateFilter} onChange={e=>setDateFilter(e.target.value)} />
+          {(dateFilter||search) && <button className="btn btn-ghost btn-sm" onClick={()=>{setDateFilter('');setSearch('')}}>Limpiar</button>}
+        </div>
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <EmptyState icon="fa-calendar-times" title="Sin turnos" desc="No hay turnos que coincidan con los filtros."
+          action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Crear turno</button>} />
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(b => (
+            <div key={b.id} className="card p-4 hover:border-[#2a2a2a] transition-colors">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 flex-shrink-0 flex items-center justify-center">
+                  <i className="fas fa-user text-brand text-sm"></i>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{b.name}</span>
+                    <StatusBadge status={b.status} />
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap mt-1">
+                    {b.phone && <span className="text-xs text-gray-500 flex items-center gap-1"><i className="fas fa-phone"></i>{b.phone}</span>}
+                    {b.vehicle && <span className="text-xs text-gray-500 flex items-center gap-1"><i className="fas fa-car"></i>{b.vehicle}</span>}
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap mt-1.5">
+                    <span className="text-xs text-gray-400 flex items-center gap-1"><i className="fas fa-wrench text-gray-600"></i>{b.service||'—'}</span>
+                    <span className="text-xs text-gray-400 flex items-center gap-1"><i className="fas fa-calendar text-gray-600"></i>{fmtDate(b.date)}{b.time&&` — ${b.time}`}</span>
+                  </div>
+                  {b.notes && <p className="text-xs text-gray-600 mt-1.5 italic">"{b.notes}"</p>}
+                </div>
+              </div>
+              {/* Actions */}
+              <div className="flex gap-2 flex-wrap mt-3 pt-3 border-t border-[#1a1a1a]">
+                <select className="input text-xs py-1.5 px-2 w-auto flex-shrink-0 h-8"
+                  value={b.status} onChange={e=>changeStatus(b.id,e.target.value)}>
+                  {Object.entries(STATUS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                </select>
+                {b.phone && (
+                  <button className="btn btn-green btn-sm" onClick={()=>sendWA(b)} title="Enviar WhatsApp">
+                    <i className="fab fa-whatsapp"></i><span className="hidden sm:inline">WhatsApp</span>
+                  </button>
+                )}
+                {b.phone && b.date && (
+                  <button className="btn btn-ghost btn-sm" onClick={()=>sendReminder(b)} title="Enviar recordatorio">
+                    <i className="fas fa-bell"></i><span className="hidden sm:inline">Recordar</span>
+                  </button>
+                )}
+                <button className="btn btn-ghost btn-sm ml-auto" onClick={()=>setModal(b)}>
+                  <i className="fas fa-pencil"></i>
+                </button>
+                <button className="btn btn-ghost btn-sm text-red-500 hover:text-red-400" onClick={()=>deleteTurno(b.id)}>
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modal && (
+        <TurnoModal turno={modal==='new'?null:modal} onClose={()=>setModal(null)}
+          onSave={saveTurno} services={services} bookings={bookings} config={config} />
+      )}
+    </div>
+  );
 }
 
-function showDayDetail(dateStr) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const dow = new Date(y, m-1, d).getDay();
-  const title = document.getElementById('dayDetailTitle');
-  const list = document.getElementById('dayDetailList');
+// ═══════════════════════════════════════════
+//  CLIENTES PAGE
+// ═══════════════════════════════════════════
+function ClienteModal({cliente, onClose, onSave}) {
+  const [form, setForm] = useState({name:'',phone:'',email:'',vehicle:'',isVIP:false,...(cliente||{})});
+  const toast = useToast();
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const save = () => {
+    if (!form.name.trim()) return toast('Ingresá el nombre', 'error');
+    onSave({...form, id:form.id||uid(), createdAt:form.createdAt||new Date().toISOString()});
+  };
+  return (
+    <Modal title={cliente?.id ? 'Editar cliente' : 'Nuevo cliente'} onClose={onClose}
+      footer={<><button className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-brand" onClick={save}><i className="fas fa-save"></i>Guardar</button></>}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField label="Nombre" required><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Nombre completo" /></FormField>
+        <FormField label="Teléfono"><input className="input" value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="1156359321" /></FormField>
+        <FormField label="Email"><input className="input" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@ejemplo.com" /></FormField>
+        <FormField label="Vehículo"><input className="input" value={form.vehicle} onChange={e=>set('vehicle',e.target.value)} placeholder="Ej: VW Gol 2019 blanco" /></FormField>
+        <div className="sm:col-span-2 flex items-center gap-3">
+          <button type="button" onClick={()=>set('isVIP',!form.isVIP)}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${form.isVIP?'bg-brand border-brand':'border-gray-600'}`}>
+            {form.isVIP && <i className="fas fa-check text-black text-xs"></i>}
+          </button>
+          <span className="text-sm">Marcar como cliente <span className="text-brand font-bold">VIP</span></span>
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
-  title.innerHTML = `${DAY_NAMES[dow]} <span>${d} de ${MONTH_NAMES[m-1].toLowerCase()} ${y}</span>`;
+function ClientesPage({clients, setClients, bookings}) {
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState(null);
+  const [detail, setDetail] = useState(null);
+  const [vipOnly, setVipOnly] = useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
 
-  const dayBookings = getBookings()
-    .filter(b => b.date === dateStr && b.status !== 'cancelled')
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const filtered = clients
+    .filter(c => !vipOnly || c.isVIP)
+    .filter(c => !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search) || c.vehicle?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b) => a.name?.localeCompare(b.name));
 
-  if (!dayBookings.length) {
-    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.88rem; text-align:center; padding:20px 0;">Sin turnos este día</p>`;
-    return;
+  const saveCliente = c => {
+    setClients(prev => {
+      const exists = prev.find(x=>x.id===c.id);
+      const n = exists ? prev.map(x=>x.id===c.id?c:x) : [c,...prev];
+      save('morrey_clients', n);
+      return n;
+    });
+    toast('Cliente guardado', 'success');
+    setModal(null);
+  };
+
+  const deleteCliente = id => {
+    confirm('¿Eliminar este cliente?', () => {
+      setClients(prev => { const n=prev.filter(c=>c.id!==id); save('morrey_clients',n); return n; });
+      toast('Cliente eliminado', 'info');
+      if (detail?.id===id) setDetail(null);
+    });
+  };
+
+  const clientBookings = c => bookings.filter(b => b.name===c.name || b.phone===c.phone).sort((a,b)=>b.date>a.date?1:-1);
+
+  if (detail) {
+    const cb = clientBookings(detail);
+    return (
+      <div className="fade-in space-y-5">
+        <div className="flex items-center gap-3">
+          <button className="btn btn-ghost btn-sm" onClick={()=>setDetail(null)}><i className="fas fa-arrow-left"></i></button>
+          <div>
+            <h1 className="text-xl font-bold flex items-center gap-2">{detail.name}{detail.isVIP&&<span className="badge bg-brand/20 text-brand border border-brand/30 text-xs">⭐ VIP</span>}</h1>
+            <p className="text-sm text-gray-500">Perfil del cliente</p>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <button className="btn btn-ghost btn-sm" onClick={()=>setModal(detail)}><i className="fas fa-pencil"></i></button>
+            <button className="btn btn-ghost btn-sm text-red-500" onClick={()=>deleteCliente(detail.id)}><i className="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="card p-5 sm:col-span-1">
+            <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center mb-4 text-2xl">
+              {detail.isVIP ? '⭐' : <i className="fas fa-user text-brand"></i>}
+            </div>
+            <div className="space-y-3">
+              {detail.phone && <div><p className="text-xs text-gray-600">Teléfono</p><p className="text-sm font-medium">{detail.phone}</p></div>}
+              {detail.email && <div><p className="text-xs text-gray-600">Email</p><p className="text-sm font-medium">{detail.email}</p></div>}
+              {detail.vehicle && <div><p className="text-xs text-gray-600">Vehículo</p><p className="text-sm font-medium">{detail.vehicle}</p></div>}
+              <div><p className="text-xs text-gray-600">Total turnos</p><p className="text-sm font-bold text-brand">{cb.length}</p></div>
+              {cb[0] && <div><p className="text-xs text-gray-600">Última visita</p><p className="text-sm font-medium">{fmtDate(cb[0].date)}</p></div>}
+            </div>
+            {detail.phone && (
+              <button className="btn btn-green btn-sm w-full mt-4" onClick={()=>window.open(`https://wa.me/54${detail.phone.replace(/\D/g,'')}`)}>
+                <i className="fab fa-whatsapp"></i> WhatsApp
+              </button>
+            )}
+          </div>
+          <div className="card p-5 sm:col-span-2">
+            <h2 className="font-semibold text-sm text-gray-300 mb-4">Historial de turnos ({cb.length})</h2>
+            {cb.length === 0 ? <p className="text-sm text-gray-600">Sin turnos registrados</p> : (
+              <div className="space-y-2">
+                {cb.map(b => (
+                  <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/2">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{b.service}</div>
+                      <div className="text-xs text-gray-500">{fmtDate(b.date)}{b.time&&` — ${b.time}`}</div>
+                    </div>
+                    <StatusBadge status={b.status} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        {modal && <ClienteModal cliente={modal} onClose={()=>setModal(null)} onSave={c=>{saveCliente(c);setDetail(c);}} />}
+      </div>
+    );
   }
 
-  list.innerHTML = dayBookings.map(b => `
-    <div class="day-booking-item">
-      <div class="dbi-name">${escHtml(b.name)}</div>
-      <div class="dbi-service">${escHtml(b.service)}</div>
-      <div class="dbi-contact">
-        <span><i class="fas fa-phone"></i> ${escHtml(b.phone)}</span>
-        <span class="badge-status ${b.status}" style="font-size:0.72rem">${b.status === 'pending' ? 'Pendiente' : 'Confirmado'}</span>
+  return (
+    <div className="fade-in space-y-5">
+      <PageHeader title="Clientes" subtitle={`${clients.length} clientes registrados`}
+        action={<button className="btn btn-brand" onClick={()=>setModal('new')}><i className="fas fa-plus"></i><span className="hidden sm:inline">Nuevo cliente</span></button>} />
+      <div className="card p-4 flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-48">
+          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-sm"></i>
+          <input className="input pl-9" placeholder="Buscar..." value={search} onChange={e=>setSearch(e.target.value)} />
+        </div>
+        <button onClick={()=>setVipOnly(!vipOnly)} className={`pill-filter ${vipOnly?'active':''}`}>
+          ⭐ Solo VIP
+        </button>
+      </div>
+      {filtered.length === 0 ? (
+        <EmptyState icon="fa-users" title="Sin clientes" desc="Aún no hay clientes registrados."
+          action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Agregar</button>} />
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th className="hidden sm:table-cell">Vehículo</th>
+                  <th className="hidden md:table-cell">Última visita</th>
+                  <th className="hidden sm:table-cell">Turnos</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(c => {
+                  const cb = clientBookings(c);
+                  const lastVisit = cb[0]?.date;
+                  return (
+                    <tr key={c.id} className="cursor-pointer" onClick={()=>setDetail(c)}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-brand">
+                            {c.name?.charAt(0)?.toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm flex items-center gap-1.5">
+                              {c.name}
+                              {c.isVIP && <span className="text-xs">⭐</span>}
+                            </div>
+                            {c.phone && <div className="text-xs text-gray-500">{c.phone}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hidden sm:table-cell text-sm text-gray-400">{c.vehicle||'—'}</td>
+                      <td className="hidden md:table-cell text-sm text-gray-400">{lastVisit?fmtDate(lastVisit):'—'}</td>
+                      <td className="hidden sm:table-cell">
+                        <span className="badge bg-white/5 text-gray-400 border border-white/5">{cb.length}</span>
+                      </td>
+                      <td onClick={e=>e.stopPropagation()}>
+                        <div className="flex justify-end gap-1">
+                          <button className="btn btn-ghost btn-sm" onClick={e=>{e.stopPropagation();setModal(c)}}><i className="fas fa-pencil text-xs"></i></button>
+                          <button className="btn btn-ghost btn-sm text-red-500" onClick={e=>{e.stopPropagation();deleteCliente(c.id)}}><i className="fas fa-trash text-xs"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {modal && <ClienteModal cliente={modal==='new'?null:modal} onClose={()=>setModal(null)} onSave={saveCliente} />}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  SERVICIOS PAGE
+// ═══════════════════════════════════════════
+function ServicioModal({svc, onClose, onSave}) {
+  const [form, setForm] = useState({name:'',desc:'',price:'',duration:'',icon:'fa-car-side',active:true,...(svc||{})});
+  const toast = useToast();
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const saveFn = () => {
+    if (!form.name.trim()) return toast('Ingresá el nombre del servicio', 'error');
+    onSave({...form, id:form.id||uid()});
+  };
+  return (
+    <Modal title={svc?.id?'Editar servicio':'Nuevo servicio'} onClose={onClose}
+      footer={<><button className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-brand" onClick={saveFn}><i className="fas fa-save"></i>Guardar</button></>}>
+      <div className="space-y-4">
+        <FormField label="Nombre" required><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Nombre del servicio" /></FormField>
+        <FormField label="Descripción"><textarea className="input" value={form.desc} onChange={e=>set('desc',e.target.value)} placeholder="Descripción breve..." /></FormField>
+        <div className="grid grid-cols-2 gap-4">
+          <FormField label="Precio"><input className="input" value={form.price} onChange={e=>set('price',e.target.value)} placeholder="Ej: $15.000" /></FormField>
+          <FormField label="Duración estimada"><input className="input" value={form.duration} onChange={e=>set('duration',e.target.value)} placeholder="Ej: 2-3 hs" /></FormField>
+        </div>
+        <FormField label="Ícono">
+          <div className="grid grid-cols-6 gap-2">
+            {ICONS.map(ic => (
+              <button key={ic} type="button" onClick={()=>set('icon',ic)}
+                className={`aspect-square rounded-lg flex items-center justify-center transition-all ${form.icon===ic?'bg-brand text-black':'bg-white/5 text-gray-400 hover:bg-white/8'}`}>
+                <i className={`fas ${ic} text-sm`}></i>
+              </button>
+            ))}
+          </div>
+        </FormField>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={()=>set('active',!form.active)}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${form.active?'bg-brand border-brand':'border-gray-600'}`}>
+            {form.active && <i className="fas fa-check text-black text-xs"></i>}
+          </button>
+          <span className="text-sm">Servicio activo <span className="text-gray-500">(visible en formulario de turnos)</span></span>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function ServiciosPage({services, setServices}) {
+  const [modal, setModal] = useState(null);
+  const toast = useToast();
+  const confirm = useConfirm();
+
+  const saveSvc = s => {
+    setServices(prev => {
+      const exists = prev.find(x=>x.id===s.id);
+      const n = exists ? prev.map(x=>x.id===s.id?s:x) : [s,...prev];
+      save('morrey_services', n);
+      return n;
+    });
+    toast('Servicio guardado', 'success');
+    setModal(null);
+  };
+
+  const deleteSvc = id => {
+    confirm('¿Eliminar este servicio?', () => {
+      setServices(prev => { const n=prev.filter(s=>s.id!==id); save('morrey_services',n); return n; });
+      toast('Servicio eliminado', 'info');
+    });
+  };
+
+  const toggleActive = id => {
+    setServices(prev => { const n=prev.map(s=>s.id===id?{...s,active:!s.active}:s); save('morrey_services',n); return n; });
+  };
+
+  return (
+    <div className="fade-in space-y-5">
+      <PageHeader title="Servicios" subtitle={`${services.filter(s=>s.active).length} activos de ${services.length}`}
+        action={<button className="btn btn-brand" onClick={()=>setModal('new')}><i className="fas fa-plus"></i><span className="hidden sm:inline">Nuevo servicio</span></button>} />
+      {services.length === 0 ? (
+        <EmptyState icon="fa-wrench" title="Sin servicios" desc="Agregá tus servicios."
+          action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Agregar</button>} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {services.map(s => (
+            <div key={s.id} className={`card p-5 transition-all hover:border-[#2a2a2a] ${!s.active?'opacity-50':''}`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                  <i className={`fas ${s.icon} text-brand`}></i>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={()=>toggleActive(s.id)} title={s.active?'Desactivar':'Activar'}
+                    className={`text-xs px-2 py-1 rounded-lg font-medium transition-colors ${s.active?'bg-green-500/10 text-green-400':'bg-white/5 text-gray-500'}`}>
+                    {s.active ? 'Activo' : 'Inactivo'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setModal(s)}><i className="fas fa-pencil text-xs"></i></button>
+                  <button className="btn btn-ghost btn-sm text-red-500" onClick={()=>deleteSvc(s.id)}><i className="fas fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <h3 className="font-semibold text-sm mb-1">{s.name}</h3>
+              {s.desc && <p className="text-xs text-gray-500 mb-2 leading-relaxed">{s.desc}</p>}
+              <div className="flex gap-3 flex-wrap mt-2">
+                {s.price && <span className="text-xs text-brand font-bold">{s.price}</span>}
+                {s.duration && <span className="text-xs text-gray-500 flex items-center gap-1"><i className="fas fa-clock"></i>{s.duration}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {modal && <ServicioModal svc={modal==='new'?null:modal} onClose={()=>setModal(null)} onSave={saveSvc} />}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  GALERÍA PAGE
+// ═══════════════════════════════════════════
+function GaleriaPage() {
+  const [hidden, setHidden] = useState(() => load('morrey_hidden_gallery', []));
+  const [extras, setExtras] = useState(() => load('morrey_extra_gallery', []));
+  const [featured, setFeatured] = useState(() => load('morrey_featured_gallery', []));
+  const fileRef = useRef();
+  const toast = useToast();
+  const confirm = useConfirm();
+
+  const builtIn = Array.from({length:34}, (_,i) => `${i+1}.jpg`);
+
+  const toggleHidden = name => {
+    const n = hidden.includes(name) ? hidden.filter(h=>h!==name) : [...hidden, name];
+    setHidden(n); save('morrey_hidden_gallery', n);
+    toast(hidden.includes(name) ? 'Imagen visible' : 'Imagen oculta', 'info');
+  };
+
+  const toggleFeatured = name => {
+    const n = featured.includes(name) ? featured.filter(f=>f!==name) : [...featured, name];
+    setFeatured(n); save('morrey_featured_gallery', n);
+  };
+
+  const deleteExtra = id => {
+    confirm('¿Eliminar esta imagen?', () => {
+      const n = extras.filter(e=>e.id!==id);
+      setExtras(n); save('morrey_extra_gallery', n);
+      toast('Imagen eliminada', 'info');
+    });
+  };
+
+  const upload = e => {
+    const files = Array.from(e.target.files);
+    files.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const item = {id:uid(), src:ev.target.result, name:f.name, addedAt:new Date().toISOString()};
+        setExtras(prev => { const n=[...prev,item]; save('morrey_extra_gallery',n); return n; });
+        toast('Imagen subida', 'success');
+      };
+      reader.readAsDataURL(f);
+    });
+    e.target.value = '';
+  };
+
+  return (
+    <div className="fade-in space-y-5">
+      <PageHeader title="Galería" subtitle={`${builtIn.length - hidden.length} visibles · ${extras.length} subidas`}
+        action={<><input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={upload} /><button className="btn btn-brand" onClick={()=>fileRef.current.click()}><i className="fas fa-upload"></i><span className="hidden sm:inline">Subir fotos</span></button></>} />
+
+      {extras.length > 0 && (
+        <div>
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Fotos subidas ({extras.length})</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            {extras.map(img => (
+              <div key={img.id} className="relative group">
+                <img src={img.src} alt={img.name} className="img-thumb" />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
+                  <button onClick={()=>deleteExtra(img.id)} className="w-7 h-7 rounded-lg bg-red-500 text-white flex items-center justify-center">
+                    <i className="fas fa-trash text-xs"></i>
+                  </button>
+                </div>
+                <span className="absolute top-1 right-1 text-xs bg-brand text-black px-1.5 py-0.5 rounded font-bold">Nueva</span>
+              </div>
+            ))}
+          </div>
+          <div className="divider my-5"></div>
+        </div>
+      )}
+
+      <div>
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Fotos del sitio ({builtIn.length})</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+          {builtIn.map(name => {
+            const isHidden = hidden.includes(name);
+            const isFeat = featured.includes(name);
+            return (
+              <div key={name} className={`relative group ${isHidden?'opacity-30':''}`}>
+                <img src={`Images/${name}`} alt={name} className="img-thumb" onError={e=>e.target.style.display='none'} />
+                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex flex-col items-center justify-center gap-1.5 p-1">
+                  <button onClick={()=>toggleHidden(name)}
+                    className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${isHidden?'bg-brand text-black':'bg-white/10 text-white'}`}>
+                    {isHidden ? 'Mostrar' : 'Ocultar'}
+                  </button>
+                  <button onClick={()=>toggleFeatured(name)}
+                    className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${isFeat?'bg-yellow-400 text-black':'bg-white/10 text-white'}`}>
+                    {isFeat ? '⭐ Dest.' : 'Destacar'}
+                  </button>
+                </div>
+                {isFeat && <span className="absolute top-1 left-1 text-xs">⭐</span>}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
-  `).join('');
+  );
 }
 
-// =============================================
-// GALERÍA TAB
-// =============================================
+// ═══════════════════════════════════════════
+//  TESTIMONIOS PAGE
+// ═══════════════════════════════════════════
+function TestimonioModal({t, onClose, onSave}) {
+  const [form, setForm] = useState({name:'',comment:'',rating:5,...(t||{})});
+  const toast = useToast();
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const saveFn = () => {
+    if (!form.name.trim()) return toast('Ingresá el nombre', 'error');
+    if (!form.comment.trim()) return toast('Ingresá el comentario', 'error');
+    onSave({...form, id:form.id||uid(), createdAt:form.createdAt||new Date().toISOString()});
+  };
+  return (
+    <Modal title={t?.id?'Editar testimonio':'Nuevo testimonio'} onClose={onClose}
+      footer={<><button className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-brand" onClick={saveFn}><i className="fas fa-save"></i>Guardar</button></>}>
+      <div className="space-y-4">
+        <FormField label="Nombre del cliente" required><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Nombre" /></FormField>
+        <FormField label="Comentario" required><textarea className="input" value={form.comment} onChange={e=>set('comment',e.target.value)} placeholder="¿Qué dijo el cliente?" style={{minHeight:100}} /></FormField>
+        <FormField label="Puntuación">
+          <div className="flex gap-2 items-center">
+            <Stars n={form.rating} onChange={v=>set('rating',v)} />
+            <span className="text-sm text-gray-500">{form.rating}/5</span>
+          </div>
+        </FormField>
+      </div>
+    </Modal>
+  );
+}
 
-function renderGalleryAdmin() {
-  const hidden = getHidden();
-  const extras = getExtras();
-  const total = KNOWN_IMAGES.length + extras.length;
-  const hiddenCount = hidden.length;
+function TestimoniosPage() {
+  const [items, setItems] = useState(() => load('morrey_testimonials', []));
+  const [modal, setModal] = useState(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
-  document.getElementById('galleryStats').textContent =
-    `${total} fotos en total · ${hiddenCount} ocultas · ${extras.length} subidas`;
+  const saveItem = t => {
+    setItems(prev => {
+      const exists = prev.find(x=>x.id===t.id);
+      const n = exists ? prev.map(x=>x.id===t.id?t:x) : [t,...prev];
+      save('morrey_testimonials', n);
+      return n;
+    });
+    toast('Testimonio guardado', 'success');
+    setModal(null);
+  };
 
-  const grid = document.getElementById('galleryAdminGrid');
-  grid.innerHTML = '';
+  const deleteItem = id => {
+    confirm('¿Eliminar este testimonio?', () => {
+      setItems(prev => { const n=prev.filter(t=>t.id!==id); save('morrey_testimonials',n); return n; });
+      toast('Eliminado', 'info');
+    });
+  };
 
-  // Known images
-  KNOWN_IMAGES.forEach(src => {
-    const isHidden = hidden.includes(src);
-    const item = document.createElement('div');
-    item.className = 'ga-item' + (isHidden ? ' hidden-img' : '');
-    item.innerHTML = `
-      <img src="${src}" alt="${src}" loading="lazy">
-      <span class="ga-hidden-badge">Oculta</span>
-      <div class="ga-item-overlay">
-        <button class="ga-btn" onclick="toggleHide('${src}')" title="${isHidden ? 'Mostrar' : 'Ocultar'}">
-          <i class="fas ${isHidden ? 'fa-eye' : 'fa-eye-slash'}"></i>
+  return (
+    <div className="fade-in space-y-5">
+      <PageHeader title="Testimonios" subtitle={`${items.length} reseñas`}
+        action={<button className="btn btn-brand" onClick={()=>setModal('new')}><i className="fas fa-plus"></i><span className="hidden sm:inline">Nuevo</span></button>} />
+      {items.length === 0 ? (
+        <EmptyState icon="fa-star" title="Sin testimonios" desc="Agregá las reseñas de tus clientes."
+          action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Agregar</button>} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map(t => (
+            <div key={t.id} className="card p-5">
+              <div className="flex justify-between items-start mb-3">
+                <Stars n={t.rating} />
+                <div className="flex gap-1">
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setModal(t)}><i className="fas fa-pencil text-xs"></i></button>
+                  <button className="btn btn-ghost btn-sm text-red-500" onClick={()=>deleteItem(t.id)}><i className="fas fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed mb-3 italic">"{t.comment}"</p>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center text-xs font-bold text-brand">
+                  {t.name?.charAt(0)?.toUpperCase()}
+                </div>
+                <span className="text-sm font-semibold">{t.name}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {modal && <TestimonioModal t={modal==='new'?null:modal} onClose={()=>setModal(null)} onSave={saveItem} />}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  PACKS PAGE
+// ═══════════════════════════════════════════
+function PackModal({pack, onClose, onSave}) {
+  const [form, setForm] = useState({name:'',desc:'',price:'',active:true,...(pack||{})});
+  const toast = useToast();
+  const set = (k,v) => setForm(p=>({...p,[k]:v}));
+  const saveFn = () => {
+    if (!form.name.trim()) return toast('Ingresá el nombre', 'error');
+    onSave({...form, id:form.id||uid()});
+  };
+  return (
+    <Modal title={pack?.id?'Editar pack':'Nuevo pack'} onClose={onClose}
+      footer={<><button className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-brand" onClick={saveFn}><i className="fas fa-save"></i>Guardar</button></>}>
+      <div className="space-y-4">
+        <FormField label="Nombre del pack" required><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Ej: Full Detailing Premium" /></FormField>
+        <FormField label="Descripción"><textarea className="input" value={form.desc} onChange={e=>set('desc',e.target.value)} placeholder="¿Qué incluye este pack?" /></FormField>
+        <FormField label="Precio"><input className="input" value={form.price} onChange={e=>set('price',e.target.value)} placeholder="Ej: $35.000" /></FormField>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={()=>set('active',!form.active)}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${form.active?'bg-brand border-brand':'border-gray-600'}`}>
+            {form.active && <i className="fas fa-check text-black text-xs"></i>}
+          </button>
+          <span className="text-sm">Pack activo / visible</span>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function PacksPage() {
+  const [packs, setPacks] = useState(() => load('morrey_packs', []));
+  const [modal, setModal] = useState(null);
+  const toast = useToast();
+  const confirm = useConfirm();
+
+  const savePack = p => {
+    setPacks(prev => {
+      const exists = prev.find(x=>x.id===p.id);
+      const n = exists ? prev.map(x=>x.id===p.id?p:x) : [p,...prev];
+      save('morrey_packs', n);
+      return n;
+    });
+    toast('Pack guardado', 'success');
+    setModal(null);
+  };
+
+  const deletePack = id => {
+    confirm('¿Eliminar este pack?', () => {
+      setPacks(prev => { const n=prev.filter(p=>p.id!==id); save('morrey_packs',n); return n; });
+      toast('Pack eliminado', 'info');
+    });
+  };
+
+  const toggle = id => {
+    setPacks(prev => { const n=prev.map(p=>p.id===id?{...p,active:!p.active}:p); save('morrey_packs',n); return n; });
+  };
+
+  return (
+    <div className="fade-in space-y-5">
+      <PageHeader title="Packs y Promociones" subtitle={`${packs.filter(p=>p.active).length} activos`}
+        action={<button className="btn btn-brand" onClick={()=>setModal('new')}><i className="fas fa-plus"></i><span className="hidden sm:inline">Nuevo pack</span></button>} />
+      {packs.length === 0 ? (
+        <EmptyState icon="fa-box-open" title="Sin packs" desc="Creá tus combos y promociones."
+          action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Crear</button>} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {packs.map(p => (
+            <div key={p.id} className={`card p-5 ${!p.active?'opacity-50':''}`}>
+              <div className="flex items-start justify-between mb-2">
+                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                  <i className="fas fa-box text-brand"></i>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={()=>toggle(p.id)}
+                    className={`text-xs px-2 py-1 rounded-lg font-medium ${p.active?'bg-green-500/10 text-green-400':'bg-white/5 text-gray-500'}`}>
+                    {p.active?'Activo':'Inactivo'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setModal(p)}><i className="fas fa-pencil text-xs"></i></button>
+                  <button className="btn btn-ghost btn-sm text-red-500" onClick={()=>deletePack(p.id)}><i className="fas fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <h3 className="font-semibold text-sm mb-1">{p.name}</h3>
+              {p.desc && <p className="text-xs text-gray-500 leading-relaxed mb-2">{p.desc}</p>}
+              {p.price && <span className="text-brand font-bold text-sm">{p.price}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {modal && <PackModal pack={modal==='new'?null:modal} onClose={()=>setModal(null)} onSave={savePack} />}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  CONFIGURACIÓN PAGE
+// ═══════════════════════════════════════════
+function ConfigPage() {
+  const [cfg, setCfg] = useState(() => ({...DEFAULT_CONFIG, ...load('morrey_config', {})}));
+  const [pw, setPw] = useState({current:'',next:'',confirm:''});
+  const [pwErr, setPwErr] = useState('');
+  const toast = useToast();
+  const DAYS_NAMES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const set = (k,v) => setCfg(p=>({...p,[k]:v}));
+
+  const saveCfg = () => {
+    save('morrey_config', cfg);
+    toast('Configuración guardada', 'success');
+  };
+
+  const toggleDay = d => {
+    const days = cfg.availableDays.includes(d) ? cfg.availableDays.filter(x=>x!==d) : [...cfg.availableDays,d].sort();
+    set('availableDays', days);
+  };
+
+  const changePw = () => {
+    const stored = load('morrey_admin_pw', 'morrey2025');
+    if (pw.current !== stored) { setPwErr('Contraseña actual incorrecta'); return; }
+    if (pw.next.length < 6) { setPwErr('Mínimo 6 caracteres'); return; }
+    if (pw.next !== pw.confirm) { setPwErr('Las contraseñas no coinciden'); return; }
+    save('morrey_admin_pw', pw.next);
+    setPw({current:'',next:'',confirm:''});
+    setPwErr('');
+    toast('Contraseña actualizada', 'success');
+  };
+
+  return (
+    <div className="fade-in space-y-6 max-w-2xl">
+      <PageHeader title="Configuración" subtitle="Ajustes generales del negocio" />
+
+      <div className="card p-6 space-y-5">
+        <h2 className="font-semibold flex items-center gap-2"><i className="fas fa-store text-brand"></i> Datos del negocio</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="WhatsApp (solo números)">
+            <input className="input" value={cfg.whatsapp} onChange={e=>set('whatsapp',e.target.value)} placeholder="5491156359321" />
+          </FormField>
+          <FormField label="Instagram (usuario)">
+            <input className="input" value={cfg.instagram} onChange={e=>set('instagram',e.target.value)} placeholder="morreydetailing" />
+          </FormField>
+        </div>
+        <FormField label="Máx. turnos por día">
+          <input className="input" type="number" min="1" max="20" value={cfg.maxPerDay} onChange={e=>set('maxPerDay',Number(e.target.value))} style={{maxWidth:100}} />
+        </FormField>
+        <FormField label="Días disponibles">
+          <div className="flex gap-2 flex-wrap">
+            {DAYS_NAMES.map((d,i) => (
+              <button key={i} type="button" onClick={()=>toggleDay(i)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${cfg.availableDays.includes(i)?'bg-brand text-black':'bg-white/5 text-gray-400 hover:bg-white/8'}`}>
+                {d}
+              </button>
+            ))}
+          </div>
+        </FormField>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <FormField label="Semana — apertura"><input className="input" type="time" value={cfg.weekdayStart} onChange={e=>set('weekdayStart',e.target.value)} /></FormField>
+          <FormField label="Semana — cierre"><input className="input" type="time" value={cfg.weekdayEnd} onChange={e=>set('weekdayEnd',e.target.value)} /></FormField>
+          <FormField label="Sábado — apertura"><input className="input" type="time" value={cfg.saturdayStart} onChange={e=>set('saturdayStart',e.target.value)} /></FormField>
+          <FormField label="Sábado — cierre"><input className="input" type="time" value={cfg.saturdayEnd} onChange={e=>set('saturdayEnd',e.target.value)} /></FormField>
+        </div>
+        <button className="btn btn-brand" onClick={saveCfg}><i className="fas fa-save"></i> Guardar configuración</button>
+      </div>
+
+      <div className="card p-6 space-y-5">
+        <h2 className="font-semibold flex items-center gap-2"><i className="fab fa-whatsapp text-green-400"></i> Mensajes WhatsApp</h2>
+        <p className="text-xs text-gray-500">Usá <code className="bg-white/5 px-1 rounded">[nombre]</code>, <code className="bg-white/5 px-1 rounded">[dia]</code>, <code className="bg-white/5 px-1 rounded">[hora]</code> como variables.</p>
+        <FormField label="Mensaje de confirmación">
+          <textarea className="input" value={cfg.confirmMsg} onChange={e=>set('confirmMsg',e.target.value)} />
+        </FormField>
+        <FormField label="Mensaje de recordatorio">
+          <textarea className="input" value={cfg.reminderMsg} onChange={e=>set('reminderMsg',e.target.value)} />
+        </FormField>
+        <button className="btn btn-brand" onClick={saveCfg}><i className="fas fa-save"></i> Guardar mensajes</button>
+      </div>
+
+      <div className="card p-6 space-y-4">
+        <h2 className="font-semibold flex items-center gap-2"><i className="fas fa-lock text-gray-400"></i> Cambiar contraseña</h2>
+        <div className="space-y-3 max-w-sm">
+          <FormField label="Contraseña actual"><input className="input" type="password" value={pw.current} onChange={e=>setPw(p=>({...p,current:e.target.value}))} /></FormField>
+          <FormField label="Nueva contraseña"><input className="input" type="password" value={pw.next} onChange={e=>setPw(p=>({...p,next:e.target.value}))} /></FormField>
+          <FormField label="Confirmar nueva contraseña"><input className="input" type="password" value={pw.confirm} onChange={e=>setPw(p=>({...p,confirm:e.target.value}))} /></FormField>
+          {pwErr && <p className="text-red-400 text-xs">{pwErr}</p>}
+          <button className="btn btn-ghost" onClick={changePw}><i className="fas fa-key"></i> Cambiar contraseña</button>
+        </div>
+      </div>
+
+      <div className="card p-6 border-red-500/20">
+        <h2 className="font-semibold flex items-center gap-2 text-red-400 mb-4"><i className="fas fa-exclamation-triangle"></i> Zona peligrosa</h2>
+        <div className="flex flex-wrap gap-3">
+          <button className="btn btn-red btn-sm" onClick={()=>{
+            if(confirm('¿Eliminar TODOS los turnos?')) { save('morrey_bookings',[]); toast('Todos los turnos eliminados','warning'); }
+          }}><i className="fas fa-trash"></i> Borrar todos los turnos</button>
+          <button className="btn btn-ghost btn-sm" onClick={()=>window.location.href='index.html'}>
+            <i className="fas fa-home"></i> Ver sitio principal
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════
+const NAV = [
+  {id:'dashboard', icon:'fa-gauge', label:'Dashboard'},
+  {id:'turnos',    icon:'fa-calendar-check', label:'Turnos'},
+  {id:'clientes',  icon:'fa-users', label:'Clientes'},
+  {id:'servicios', icon:'fa-wrench', label:'Servicios'},
+  {id:'galeria',   icon:'fa-images', label:'Galería'},
+  {id:'testimonios',icon:'fa-star', label:'Testimonios'},
+  {id:'packs',     icon:'fa-box-open', label:'Packs'},
+  {id:'config',    icon:'fa-sliders', label:'Configuración'},
+];
+
+function Sidebar({page, setPage, onClose, pendingCount}) {
+  return (
+    <aside className="flex flex-col h-full" style={{background:'#0b0b0b'}}>
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-[#161616]">
+        <img src="logo.jpg" alt="Logo" className="w-9 h-9 rounded-lg object-cover" onError={e=>e.target.style.display='none'} />
+        <div>
+          <div className="font-bold text-sm leading-none">Morrey</div>
+          <div className="text-xs text-gray-600">Detailing Admin</div>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="ml-auto text-gray-600 hover:text-white transition-colors lg:hidden">
+            <i className="fas fa-times"></i>
+          </button>
+        )}
+      </div>
+      {/* Nav */}
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {NAV.map(n => (
+          <div key={n.id} className={`nav-link ${page===n.id?'active':''}`}
+            onClick={() => { setPage(n.id); onClose && onClose(); }}>
+            <i className={`fas ${n.icon} w-4 text-center text-sm`}></i>
+            <span>{n.label}</span>
+            {n.id==='turnos' && pendingCount > 0 && (
+              <span className="ml-auto bg-brand text-black text-xs font-bold px-1.5 py-0.5 rounded-full">{pendingCount}</span>
+            )}
+          </div>
+        ))}
+      </nav>
+      {/* Footer */}
+      <div className="p-4 border-t border-[#161616]">
+        <a href="index.html" className="nav-link text-xs">
+          <i className="fas fa-globe w-4 text-center text-sm"></i>
+          <span>Ver sitio</span>
+          <i className="fas fa-arrow-up-right-from-square text-xs ml-auto opacity-40"></i>
+        </a>
+      </div>
+    </aside>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  TOPBAR
+// ═══════════════════════════════════════════
+function TopBar({page, onMenuClick, onLogout, bookings}) {
+  const [showNotif, setShowNotif] = useState(false);
+  const todayStr = today();
+  const newToday = bookings.filter(b => b.date === todayStr && b.status === 'pending');
+  const label = NAV.find(n=>n.id===page)?.label || page;
+
+  return (
+    <header className="flex items-center gap-3 px-4 py-3 border-b border-[#161616] sticky top-0 z-20" style={{background:'#0a0a0a'}}>
+      <button className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors" onClick={onMenuClick}>
+        <i className="fas fa-bars"></i>
+      </button>
+      <h2 className="font-semibold text-sm">{label}</h2>
+      <div className="ml-auto flex items-center gap-2">
+        {/* Notifications */}
+        <div className="relative">
+          <button onClick={()=>setShowNotif(!showNotif)}
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors relative">
+            <i className="fas fa-bell"></i>
+            {newToday.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-brand rounded-full"></span>}
+          </button>
+          {showNotif && (
+            <div className="absolute right-0 top-full mt-2 w-72 card p-3 z-50 shadow-2xl fade-in">
+              <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Turnos de hoy</p>
+              {newToday.length === 0 ? (
+                <p className="text-xs text-gray-600 py-2 text-center">Sin turnos pendientes hoy</p>
+              ) : newToday.map(b => (
+                <div key={b.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/3 transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-user text-brand text-xs"></i>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-medium truncate">{b.name}</div>
+                    <div className="text-xs text-gray-600 truncate">{b.service} — {b.time||'sin hora'}</div>
+                  </div>
+                </div>
+              ))}
+              <button onClick={()=>setShowNotif(false)} className="w-full mt-2 text-xs text-gray-600 hover:text-gray-400 transition-colors py-1">Cerrar</button>
+            </div>
+          )}
+        </div>
+        <button onClick={onLogout}
+          className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-colors" title="Salir">
+          <i className="fas fa-sign-out-alt"></i>
         </button>
       </div>
-    `;
-    grid.appendChild(item);
-  });
-
-  // Extra images
-  extras.forEach(extra => {
-    const item = document.createElement('div');
-    item.className = 'ga-item';
-    item.innerHTML = `
-      <img src="${extra.src}" alt="${extra.name || 'Extra'}" loading="lazy">
-      <span class="ga-extra-badge">Nueva</span>
-      <div class="ga-item-overlay">
-        <button class="ga-btn del" onclick="deleteExtra('${extra.id}')" title="Eliminar">
-          <i class="fas fa-trash"></i>
-        </button>
-      </div>
-    `;
-    grid.appendChild(item);
-  });
+    </header>
+  );
 }
 
-function toggleHide(src) {
-  const hidden = getHidden();
-  const idx = hidden.indexOf(src);
-  if (idx >= 0) hidden.splice(idx, 1);
-  else hidden.push(src);
-  saveHidden(hidden);
-  renderGalleryAdmin();
-  showToast(idx >= 0 ? 'Foto visible en el sitio' : 'Foto oculta del sitio', idx >= 0 ? 'success' : '');
-}
+// ═══════════════════════════════════════════
+//  APP
+// ═══════════════════════════════════════════
+function App() {
+  const [auth, setAuth] = useState(() => sessionStorage.getItem('morrey_auth') === '1');
+  const [page, setPage] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-function deleteExtra(id) {
-  confirmAction('Eliminar esta foto subida', () => {
-    const extras = getExtras().filter(e => e.id !== id);
-    saveExtras(extras);
-    renderGalleryAdmin();
-    showToast('Foto eliminada');
+  // Global state
+  const [bookings, setBookings]   = useState(() => load('morrey_bookings', []));
+  const [clients,  setClients]    = useState(() => load('morrey_clients', []));
+  const [services, setServices]   = useState(() => {
+    const s = load('morrey_services', null);
+    if (!s) { save('morrey_services', DEFAULT_SERVICES); return DEFAULT_SERVICES; }
+    return s;
   });
-}
+  const config = {...DEFAULT_CONFIG, ...load('morrey_config', {})};
 
-function handlePhotoUpload(input) {
-  const files = Array.from(input.files);
-  if (!files.length) return;
-
-  let processed = 0;
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const extras = getExtras();
-      extras.push({
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-        src: e.target.result,
-        name: file.name,
-        addedAt: new Date().toISOString()
-      });
-      saveExtras(extras);
-      processed++;
-      if (processed === files.length) {
-        renderGalleryAdmin();
-        showToast(`✓ ${files.length} foto${files.length > 1 ? 's' : ''} subida${files.length > 1 ? 's' : ''}`, 'success');
+  // Notification sound on new pending booking
+  const prevBookingsLen = useRef(bookings.length);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const fresh = load('morrey_bookings', []);
+      if (fresh.length > prevBookingsLen.current) {
+        prevBookingsLen.current = fresh.length;
+        setBookings(fresh);
+        try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play().catch(()=>{}); } catch {}
       }
-    };
-    reader.readAsDataURL(file);
-  });
-  input.value = '';
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const login = () => { sessionStorage.setItem('morrey_auth','1'); setAuth(true); };
+  const logout = () => { sessionStorage.removeItem('morrey_auth'); setAuth(false); };
+
+  const pendingCount = bookings.filter(b=>b.status==='pending').length;
+
+  if (!auth) return <LoginPage onLogin={login} />;
+
+  const pages = {
+    dashboard: <Dashboard bookings={bookings} clients={clients} services={services} />,
+    turnos:    <TurnosPage bookings={bookings} setBookings={setBookings} services={services} config={config} />,
+    clientes:  <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
+    servicios: <ServiciosPage services={services} setServices={setServices} />,
+    galeria:   <GaleriaPage />,
+    testimonios:<TestimoniosPage />,
+    packs:     <PacksPage />,
+    config:    <ConfigPage />,
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      {/* Desktop sidebar */}
+      <div className="hidden lg:flex flex-col w-56 flex-shrink-0 border-r border-[#161616]">
+        <Sidebar page={page} setPage={setPage} pendingCount={pendingCount} />
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="lg:hidden">
+          <div className="sidebar-mobile-overlay" onClick={()=>setSidebarOpen(false)}></div>
+          <div className="fixed left-0 top-0 h-full w-56 z-40 border-r border-[#161616] flex flex-col fade-in">
+            <Sidebar page={page} setPage={setPage} pendingCount={pendingCount} onClose={()=>setSidebarOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <TopBar page={page} onMenuClick={()=>setSidebarOpen(true)} onLogout={logout} bookings={bookings} />
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <div className="max-w-5xl mx-auto">
+            {pages[page] || pages.dashboard}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
 }
 
-// =============================================
-// AJUSTES TAB
-// =============================================
-
-function initAjustes() {
-  document.getElementById('maxPerDay').value = localStorage.getItem('morrey_max_per_day') || '4';
-}
-
-function changePassword() {
-  const current = document.getElementById('pwCurrent').value;
-  const newPw = document.getElementById('pwNew').value;
-  const confirm = document.getElementById('pwConfirm').value;
-
-  if (current !== getPassword()) {
-    showToast('Contraseña actual incorrecta', 'error'); return;
-  }
-  if (!newPw || newPw.length < 4) {
-    showToast('La nueva contraseña debe tener al menos 4 caracteres', 'error'); return;
-  }
-  if (newPw !== confirm) {
-    showToast('Las contraseñas no coinciden', 'error'); return;
-  }
-
-  localStorage.setItem('morrey_admin_pw', newPw);
-  document.getElementById('pwCurrent').value = '';
-  document.getElementById('pwNew').value = '';
-  document.getElementById('pwConfirm').value = '';
-
-  const msg = document.getElementById('pwSaveMsg');
-  msg.style.display = 'inline';
-  setTimeout(() => msg.style.display = 'none', 3000);
-  showToast('✓ Contraseña actualizada', 'success');
-}
-
-function saveBookingConfig() {
-  const max = parseInt(document.getElementById('maxPerDay').value, 10);
-  if (isNaN(max) || max < 1) { showToast('Valor inválido', 'error'); return; }
-  localStorage.setItem('morrey_max_per_day', max);
-  const msg = document.getElementById('configSaveMsg');
-  msg.style.display = 'inline';
-  setTimeout(() => msg.style.display = 'none', 3000);
-  showToast('✓ Configuración guardada', 'success');
-}
-
-function deleteCancelled() {
-  const bookings = getBookings().filter(b => b.status !== 'cancelled');
-  saveBookings(bookings);
-  renderBookings();
-  showToast('Turnos cancelados eliminados', 'success');
-}
-
-function deleteAllBookings() {
-  saveBookings([]);
-  renderBookings();
-  showToast('Todos los turnos eliminados');
-}
-
-function resetGallery() {
-  saveHidden([]);
-  saveExtras([]);
-  renderGalleryAdmin();
-  showToast('Galería restaurada', 'success');
-}
-
-// =============================================
-// CONFIRM MODAL
-// =============================================
-
-let pendingAction = null;
-
-function confirmAction(msg, fn) {
-  pendingAction = fn;
-  document.getElementById('confirmMsg').textContent = msg + '. ¿Estás seguro?';
-  document.getElementById('confirmOverlay').classList.add('active');
-}
-
-function closeConfirm() {
-  document.getElementById('confirmOverlay').classList.remove('active');
-  pendingAction = null;
-}
-
-document.getElementById('confirmYes').addEventListener('click', () => {
-  if (typeof pendingAction === 'function') pendingAction();
-  closeConfirm();
-});
-
-document.getElementById('confirmOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('confirmOverlay')) closeConfirm();
-});
-
-// =============================================
-// TOAST
-// =============================================
-
-let toastTimer;
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (type ? ' ' + type : '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// =============================================
-// HELPERS
-// =============================================
-
-function toDateStr(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function escHtml(str) {
-  return String(str || '')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
+// Bootstrap
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <ToastProvider>
+    <ConfirmProvider>
+      <App />
+    </ConfirmProvider>
+  </ToastProvider>
+);
 </script>
 </body>
 </html>
