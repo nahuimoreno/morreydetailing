@@ -108,6 +108,15 @@ const PAYMENT_METHODS = ['Efectivo','Transferencia','Tarjeta débito','Tarjeta c
 const fmtMoney = n => (n !== undefined && n !== '' && n !== null) ? `$${Number(n).toLocaleString('es-AR')}` : '—';
 
 // ═══════════════════════════════════════════
+//  TESTIMONIO STATUS
+// ═══════════════════════════════════════════
+const TESTIMONIO_STATUS = {
+  pending:   { label:'Pendiente', cls:'bg-yellow-500/15 text-yellow-400 border border-yellow-500/25', dot:'bg-yellow-400' },
+  published: { label:'Publicado', cls:'bg-green-500/15 text-green-400 border border-green-500/25',   dot:'bg-green-400' },
+  hidden:    { label:'Oculto',    cls:'bg-gray-500/15 text-gray-400 border border-gray-500/25',       dot:'bg-gray-500' },
+};
+
+// ═══════════════════════════════════════════
 //  DEFAULTS
 // ═══════════════════════════════════════════
 const ICONS = ['fa-car-side','fa-couch','fa-cog','fa-sun','fa-shield-alt','fa-gem','fa-lightbulb','fa-spray-can','fa-water','fa-star','fa-wrench','fa-paint-brush'];
@@ -202,6 +211,11 @@ function StatusBadge({status}) {
 
 function PaymentBadge({status}) {
   const s = PAYMENT_STATUS[status] || PAYMENT_STATUS.unpaid;
+  return <span className={`badge ${s.cls}`}><span className={`w-1.5 h-1.5 rounded-full ${s.dot} inline-block`}></span>{s.label}</span>;
+}
+
+function TestimonioBadge({status}) {
+  const s = TESTIMONIO_STATUS[status] || TESTIMONIO_STATUS.pending;
   return <span className={`badge ${s.cls}`}><span className={`w-1.5 h-1.5 rounded-full ${s.dot} inline-block`}></span>{s.label}</span>;
 }
 
@@ -1243,8 +1257,13 @@ function GaleriaPage() {
             const isHidden = hidden.includes(name);
             const isFeat = featured.includes(name);
             return (
-              <div key={name} className={`relative group ${isHidden?'opacity-30':''}`}>
-                <img src={`Images/${name}`} alt={name} className="img-thumb" onError={e=>e.target.style.display='none'} />
+              <div key={name} className={`relative group ${isHidden?'opacity-30':''}`} style={{background:'#181818',borderRadius:9,overflow:'hidden',aspectRatio:'1/1'}}>
+                <img src={`Images/${name}`} alt={name} className="img-thumb"
+                  onError={e=>{e.target.onerror=null;e.target.style.opacity='0.05';e.target.nextElementSibling.style.display='flex';}} />
+                <div className="absolute inset-0 hidden items-center justify-center flex-col gap-1 pointer-events-none">
+                  <i className="fas fa-image text-gray-700 text-xl"></i>
+                  <span className="text-gray-700 text-xs">{name}</span>
+                </div>
                 <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex flex-col items-center justify-center gap-1.5 p-1">
                   <button onClick={()=>toggleHidden(name)}
                     className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${isHidden?'bg-brand text-black':'bg-white/10 text-white'}`}>
@@ -1268,37 +1287,138 @@ function GaleriaPage() {
 // ═══════════════════════════════════════════
 //  TESTIMONIOS PAGE
 // ═══════════════════════════════════════════
-function TestimonioModal({t, onClose, onSave}) {
-  const [form, setForm] = useState({name:'',comment:'',rating:5,...(t||{})});
+function TestimonioModal({t, onClose, onSave, services}) {
+  const [form, setForm] = useState({
+    name:'', comment:'', rating:5, service:'', vehicle:'',
+    photo:null, showPhoto:true, status:'published', featured:false,
+    ...(t||{})
+  });
+  const [preview, setPreview] = useState(t?.photo||null);
+  const fileRef = useRef();
   const toast = useToast();
   const set = (k,v) => setForm(p=>({...p,[k]:v}));
-  const saveFn = () => {
-    if (!form.name.trim()) return toast('Ingresá el nombre', 'error');
-    if (!form.comment.trim()) return toast('Ingresá el comentario', 'error');
-    onSave({...form, id:form.id||uid(), createdAt:form.createdAt||new Date().toISOString()});
+
+  const uploadPhoto = e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (!f.type.startsWith('image/')) return toast('Solo se permiten imágenes', 'error');
+    if (f.size > 5*1024*1024) return toast('La imagen no puede superar 5MB', 'error');
+    const reader = new FileReader();
+    reader.onload = ev => { set('photo', ev.target.result); setPreview(ev.target.result); };
+    reader.readAsDataURL(f);
+    e.target.value = '';
   };
+
+  const removePhoto = () => { set('photo', null); setPreview(null); };
+
+  const saveFn = () => {
+    if (!form.name.trim()) return toast('Ingresá el nombre del cliente', 'error');
+    if (!form.comment.trim()) return toast('Ingresá el comentario', 'error');
+    if (form.comment.length > 500) return toast('El comentario no puede superar 500 caracteres', 'error');
+    onSave({...form, id:form.id||uid(), createdAt:form.createdAt||new Date().toISOString(), source:form.source||'admin'});
+  };
+
+  const activeServices = services ? services.filter(s=>s.active) : [];
+  const charLeft = 500 - (form.comment?.length||0);
+
   return (
     <Modal title={t?.id?'Editar testimonio':'Nuevo testimonio'} onClose={onClose}
       footer={<><button className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-brand" onClick={saveFn}><i className="fas fa-save"></i>Guardar</button></>}>
       <div className="space-y-4">
-        <FormField label="Nombre del cliente" required><input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Nombre" /></FormField>
-        <FormField label="Comentario" required><textarea className="input" value={form.comment} onChange={e=>set('comment',e.target.value)} placeholder="¿Qué dijo el cliente?" style={{minHeight:100}} /></FormField>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Nombre del cliente" required>
+            <input className="input" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Ej: Martín G." />
+          </FormField>
+          <FormField label="Vehículo">
+            <input className="input" value={form.vehicle} onChange={e=>set('vehicle',e.target.value)} placeholder="Ej: Toyota Corolla" />
+          </FormField>
+        </div>
+        {activeServices.length > 0 && (
+          <FormField label="Servicio realizado">
+            <select className="input" value={form.service} onChange={e=>set('service',e.target.value)}>
+              <option value="">Sin especificar</option>
+              {activeServices.map(s=><option key={s.id} value={s.name}>{s.name}</option>)}
+            </select>
+          </FormField>
+        )}
+        <FormField label="Comentario" required>
+          <textarea className="input" value={form.comment} onChange={e=>set('comment',e.target.value)}
+            placeholder="¿Qué dijo el cliente sobre el trabajo?" style={{minHeight:100}} />
+          <span className={`text-xs ml-auto self-end ${charLeft<50?'text-red-400':'text-gray-600'}`}>{charLeft} caracteres restantes</span>
+        </FormField>
         <FormField label="Puntuación">
           <div className="flex gap-2 items-center">
             <Stars n={form.rating} onChange={v=>set('rating',v)} />
             <span className="text-sm text-gray-500">{form.rating}/5</span>
           </div>
         </FormField>
+        {/* Photo */}
+        <FormField label="Foto del auto (opcional)">
+          {preview ? (
+            <div className="relative">
+              <img src={preview} alt="preview" className="w-full rounded-xl object-cover" style={{maxHeight:180}} />
+              <button onClick={removePhoto}
+                className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-red-500 text-white flex items-center justify-center">
+                <i className="fas fa-times text-xs"></i>
+              </button>
+              <div className="flex items-center gap-2 mt-2">
+                <button type="button" onClick={()=>set('showPhoto',!form.showPhoto)}
+                  className={`w-4 h-4 rounded border flex items-center justify-center ${form.showPhoto?'bg-brand border-brand':'border-gray-600'}`}>
+                  {form.showPhoto&&<i className="fas fa-check text-black text-[9px]"></i>}
+                </button>
+                <span className="text-xs text-gray-500">Mostrar foto en el sitio</span>
+              </div>
+            </div>
+          ) : (
+            <><input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={uploadPhoto} />
+            <button type="button" onClick={()=>fileRef.current.click()}
+              className="w-full border-2 border-dashed border-[#252525] rounded-xl py-6 text-gray-600 hover:border-[#333] hover:text-gray-400 transition-colors text-sm flex flex-col items-center gap-2">
+              <i className="fas fa-camera text-xl"></i>JPG, PNG o WebP · máx. 5MB
+            </button></>
+          )}
+        </FormField>
+        {/* Meta */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField label="Estado">
+            <select className="input" value={form.status} onChange={e=>set('status',e.target.value)}>
+              <option value="published">Publicado</option>
+              <option value="pending">Pendiente</option>
+              <option value="hidden">Oculto</option>
+            </select>
+          </FormField>
+          <FormField label="Destacado">
+            <div className="flex items-center gap-2 h-10 mt-0.5">
+              <button type="button" onClick={()=>set('featured',!form.featured)}
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center ${form.featured?'bg-brand border-brand':'border-gray-600'}`}>
+                {form.featured&&<i className="fas fa-check text-black text-xs"></i>}
+              </button>
+              <span className="text-sm text-gray-400">Mostrar primero <span className="text-brand">⭐</span></span>
+            </div>
+          </FormField>
+        </div>
       </div>
     </Modal>
   );
 }
 
-function TestimoniosPage() {
-  const [items, setItems] = useState(() => load('morrey_testimonials', []));
+function TestimoniosPage({items, setItems, services}) {
+  const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState(null);
   const toast = useToast();
   const confirm = useConfirm();
+
+  const pendingCount = items.filter(t => !t.status || t.status==='pending').length;
+
+  const filtered = [...items]
+    .filter(t => {
+      if (filter === 'all') return true;
+      if (filter === 'pending') return !t.status || t.status === 'pending';
+      return t.status === filter;
+    })
+    .sort((a,b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return (b.createdAt||'') > (a.createdAt||'') ? 1 : -1;
+    });
 
   const saveItem = t => {
     setItems(prev => {
@@ -1312,42 +1432,140 @@ function TestimoniosPage() {
   };
 
   const deleteItem = id => {
-    confirm('¿Eliminar este testimonio?', () => {
+    confirm('¿Eliminar este testimonio? No se puede deshacer.', () => {
       setItems(prev => { const n=prev.filter(t=>t.id!==id); save('morrey_testimonials',n); return n; });
       toast('Eliminado', 'info');
     });
   };
 
+  const changeStatus = (id, status) => {
+    setItems(prev => { const n=prev.map(t=>t.id===id?{...t,status}:t); save('morrey_testimonials',n); return n; });
+    toast(TESTIMONIO_STATUS[status].label, 'success');
+  };
+
+  const toggleFeatured = id => {
+    setItems(prev => { const n=prev.map(t=>t.id===id?{...t,featured:!t.featured}:t); save('morrey_testimonials',n); return n; });
+  };
+
+  const toggleShowPhoto = id => {
+    setItems(prev => { const n=prev.map(t=>t.id===id?{...t,showPhoto:!t.showPhoto}:t); save('morrey_testimonials',n); return n; });
+  };
+
+  const tabs = [
+    {k:'all',      label:'Todos',      count:items.length},
+    {k:'pending',  label:'Pendientes', count:items.filter(t=>!t.status||t.status==='pending').length},
+    {k:'published',label:'Publicados', count:items.filter(t=>t.status==='published').length},
+    {k:'hidden',   label:'Ocultos',    count:items.filter(t=>t.status==='hidden').length},
+  ];
+
   return (
     <div className="fade-in space-y-5">
-      <PageHeader title="Testimonios" subtitle={`${items.length} reseñas`}
-        action={<button className="btn btn-brand" onClick={()=>setModal('new')}><i className="fas fa-plus"></i><span className="hidden sm:inline">Nuevo</span></button>} />
-      {items.length === 0 ? (
-        <EmptyState icon="fa-star" title="Sin testimonios" desc="Agregá las reseñas de tus clientes."
+      <PageHeader
+        title="Testimonios"
+        subtitle={`${items.length} reseñas${pendingCount>0?` · ${pendingCount} pendientes de revisión`:''}`}
+        action={<button className="btn btn-brand" onClick={()=>setModal('new')}><i className="fas fa-plus"></i><span className="hidden sm:inline">Nuevo</span></button>}
+      />
+
+      {/* Info pendientes */}
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-3 p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
+          <i className="fas fa-clock text-yellow-400"></i>
+          <span className="text-sm text-yellow-300">{pendingCount} testimonio{pendingCount>1?'s':''} enviado{pendingCount>1?'s':''} desde la web esperando tu revisión.</span>
+          <button className="btn btn-sm ml-auto" style={{background:'rgba(234,179,8,.15)',color:'#facc15',border:'1px solid rgba(234,179,8,.25)'}}
+            onClick={()=>setFilter('pending')}>Ver pendientes</button>
+        </div>
+      )}
+
+      {/* Status tabs */}
+      <div className="card p-3 flex gap-2 overflow-x-auto">
+        {tabs.map(t => (
+          <button key={t.k} onClick={()=>setFilter(t.k)} className={`pill-filter flex-shrink-0 ${filter===t.k?'active':''}`}>
+            {t.label}
+            {t.count > 0 && <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${filter===t.k?'bg-brand/20 text-brand':'bg-white/5 text-gray-500'}`}>{t.count}</span>}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState icon="fa-star" title="Sin testimonios" desc="No hay testimonios en esta categoría."
           action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Agregar</button>} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map(t => (
-            <div key={t.id} className="card p-5">
-              <div className="flex justify-between items-start mb-3">
-                <Stars n={t.rating} />
-                <div className="flex gap-1">
-                  <button className="btn btn-ghost btn-sm" onClick={()=>setModal(t)}><i className="fas fa-pencil text-xs"></i></button>
-                  <button className="btn btn-ghost btn-sm text-red-500" onClick={()=>deleteItem(t.id)}><i className="fas fa-trash text-xs"></i></button>
+          {filtered.map(t => {
+            const status = t.status || 'pending';
+            const isPending = status === 'pending';
+            return (
+              <div key={t.id} className={`card p-5 flex flex-col gap-3 ${isPending?'border-yellow-500/20':''}`}>
+                {/* Photo */}
+                {t.photo && (
+                  <div className="relative rounded-xl overflow-hidden" style={{height:120}}>
+                    <img src={t.photo} alt="" className="w-full h-full object-cover" style={{opacity:t.showPhoto===false?0.2:1}} />
+                    {t.showPhoto === false && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                        <span className="text-xs text-gray-400 flex items-center gap-1"><i className="fas fa-eye-slash"></i>Foto oculta</span>
+                      </div>
+                    )}
+                    <button onClick={()=>toggleShowPhoto(t.id)} title={t.showPhoto===false?'Mostrar foto':'Ocultar foto'}
+                      className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors">
+                      <i className={`fas ${t.showPhoto===false?'fa-eye':'fa-eye-slash'} text-xs`}></i>
+                    </button>
+                  </div>
+                )}
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <TestimonioBadge status={status} />
+                    {t.featured && <span className="text-xs text-brand">⭐ Destacado</span>}
+                    {t.source === 'web' && <span className="badge bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs">Web</span>}
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button className="btn btn-ghost btn-sm" onClick={()=>setModal(t)} title="Editar"><i className="fas fa-pencil text-xs"></i></button>
+                    <button className="btn btn-ghost btn-sm text-red-500" onClick={()=>deleteItem(t.id)} title="Eliminar"><i className="fas fa-trash text-xs"></i></button>
+                  </div>
+                </div>
+                {/* Stars */}
+                {t.rating > 0 && <Stars n={t.rating||t.stars||5} />}
+                {/* Comment */}
+                <p className="text-sm text-gray-300 leading-relaxed italic flex-1">"{t.comment||t.text}"</p>
+                {/* Client */}
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center text-xs font-bold text-brand flex-shrink-0">
+                    {(t.name||'?').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold">{t.name}</div>
+                    {(t.vehicle||t.service) && <div className="text-xs text-gray-600 truncate">{t.vehicle||t.service}</div>}
+                  </div>
+                </div>
+                {/* Actions */}
+                <div className="flex gap-2 flex-wrap pt-2 border-t border-[#1a1a1a]">
+                  {status !== 'published' && (
+                    <button className="btn btn-sm btn-green flex-1" onClick={()=>changeStatus(t.id,'published')}>
+                      <i className="fas fa-check"></i> Publicar
+                    </button>
+                  )}
+                  {status !== 'hidden' && (
+                    <button className="btn btn-ghost btn-sm flex-1" onClick={()=>changeStatus(t.id,'hidden')}>
+                      <i className="fas fa-eye-slash"></i> Ocultar
+                    </button>
+                  )}
+                  {status !== 'pending' && (
+                    <button className="btn btn-ghost btn-sm" onClick={()=>changeStatus(t.id,'pending')}>
+                      <i className="fas fa-rotate-left"></i>
+                    </button>
+                  )}
+                  <button onClick={()=>toggleFeatured(t.id)} title={t.featured?'Quitar destacado':'Destacar'}
+                    className={`btn btn-sm ml-auto ${t.featured?'':'btn-ghost'}`}
+                    style={t.featured?{background:'rgba(255,222,0,.15)',color:'#ffde00',border:'1px solid rgba(255,222,0,.3)'}:{}}>
+                    <i className="fas fa-star"></i>
+                  </button>
                 </div>
               </div>
-              <p className="text-sm text-gray-300 leading-relaxed mb-3 italic">"{t.comment}"</p>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center text-xs font-bold text-brand">
-                  {t.name?.charAt(0)?.toUpperCase()}
-                </div>
-                <span className="text-sm font-semibold">{t.name}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-      {modal && <TestimonioModal t={modal==='new'?null:modal} onClose={()=>setModal(null)} onSave={saveItem} />}
+      {modal && <TestimonioModal t={modal==='new'?null:modal} onClose={()=>setModal(null)} onSave={saveItem} services={services} />}
     </div>
   );
 }
@@ -1822,7 +2040,7 @@ const NAV = [
   {id:'config',    icon:'fa-sliders',        label:'Configuración'},
 ];
 
-function Sidebar({page, setPage, onClose, pendingCount}) {
+function Sidebar({page, setPage, onClose, pendingCount, pendingTestimonials}) {
   return (
     <aside className="flex flex-col h-full" style={{background:'#0b0b0b'}}>
       {/* Logo */}
@@ -1847,6 +2065,9 @@ function Sidebar({page, setPage, onClose, pendingCount}) {
             <span>{n.label}</span>
             {n.id==='turnos' && pendingCount > 0 && (
               <span className="ml-auto bg-brand text-black text-xs font-bold px-1.5 py-0.5 rounded-full">{pendingCount}</span>
+            )}
+            {n.id==='testimonios' && pendingTestimonials > 0 && (
+              <span className="ml-auto bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded-full">{pendingTestimonials}</span>
             )}
           </div>
         ))}
@@ -1924,9 +2145,10 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Global state
-  const [bookings, setBookings]   = useState(() => load('morrey_bookings', []));
-  const [clients,  setClients]    = useState(() => load('morrey_clients', []));
-  const [services, setServices]   = useState(() => {
+  const [bookings,     setBookings]     = useState(() => load('morrey_bookings', []));
+  const [clients,      setClients]      = useState(() => load('morrey_clients', []));
+  const [testimonials, setTestimonials] = useState(() => load('morrey_testimonials', []));
+  const [services, setServices] = useState(() => {
     const s = load('morrey_services', null);
     if (!s) { save('morrey_services', DEFAULT_SERVICES); return DEFAULT_SERVICES; }
     return s;
@@ -1951,6 +2173,7 @@ function App() {
   const logout = () => { sessionStorage.removeItem('morrey_auth'); setAuth(false); };
 
   const pendingCount = bookings.filter(b=>b.status==='pending').length;
+  const pendingTestimonials = testimonials.filter(t=>!t.status||t.status==='pending').length;
 
   if (!auth) return <LoginPage onLogin={login} />;
 
@@ -1961,7 +2184,7 @@ function App() {
     clientes:   <ClientesPage clients={clients} setClients={setClients} bookings={bookings} />,
     servicios:  <ServiciosPage services={services} setServices={setServices} />,
     galeria:    <GaleriaPage />,
-    testimonios:<TestimoniosPage />,
+    testimonios:<TestimoniosPage items={testimonials} setItems={setTestimonials} services={services} />,
     packs:      <PacksPage />,
     config:     <ConfigPage />,
   };
@@ -1970,7 +2193,7 @@ function App() {
     <div className="flex h-screen overflow-hidden">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-col w-56 flex-shrink-0 border-r border-[#161616]">
-        <Sidebar page={page} setPage={setPage} pendingCount={pendingCount} />
+        <Sidebar page={page} setPage={setPage} pendingCount={pendingCount} pendingTestimonials={pendingTestimonials} />
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -1978,7 +2201,7 @@ function App() {
         <div className="lg:hidden">
           <div className="sidebar-mobile-overlay" onClick={()=>setSidebarOpen(false)}></div>
           <div className="fixed left-0 top-0 h-full w-56 z-40 border-r border-[#161616] flex flex-col fade-in">
-            <Sidebar page={page} setPage={setPage} pendingCount={pendingCount} onClose={()=>setSidebarOpen(false)} />
+            <Sidebar page={page} setPage={setPage} pendingCount={pendingCount} pendingTestimonials={pendingTestimonials} onClose={()=>setSidebarOpen(false)} />
           </div>
         </div>
       )}
