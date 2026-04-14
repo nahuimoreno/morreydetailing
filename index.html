@@ -994,14 +994,34 @@
       const [submitError, setSubmitError] = useState('');
 
       const submit = async () => {
+        // Validaciones específicas
         const e = {};
-        const required = ['service','date','time','name','phone'];
-        required.forEach(k => { if (!form[k].trim()) e[k] = true; });
+        if (!form.service)           e.service = 'Seleccioná un servicio';
+        if (!form.date)              e.date    = 'Elegí una fecha';
+        if (!form.time)              e.time    = 'Seleccioná un horario';
+        if (!form.name.trim())       e.name    = 'Ingresá tu nombre completo';
+        if (!form.phone.trim())      e.phone   = 'Ingresá tu número de celular';
+        else if (form.phone.replace(/\D/g,'').length < 8) e.phone = 'Mínimo 8 dígitos';
         setErr(e);
         if (Object.keys(e).length) return;
 
         setSubmitting(true);
         setSubmitError('');
+
+        // Verificar si el horario ya está ocupado
+        if (_db) {
+          try {
+            const { data: taken } = await _db.from('bookings')
+              .select('id').eq('date', form.date).eq('time', form.time)
+              .neq('status','cancelled').limit(1);
+            if (taken && taken.length > 0) {
+              setSubmitting(false);
+              setSubmitError('Ese horario ya está reservado. Elegí otro.');
+              upd('time', '');
+              return;
+            }
+          } catch(_) {}
+        }
 
         const booking = {
           id:         uid(),
@@ -1025,7 +1045,6 @@
             return;
           }
         } else {
-          // Fallback a localStorage si Supabase no está configurado
           try {
             const all = JSON.parse(localStorage.getItem('morrey_bookings') || '[]');
             all.push({...booking, createdAt: booking.created_at});
@@ -1081,44 +1100,61 @@
 
               {done ? (
                 /* ---- ESTADO: TURNO RECIBIDO ---- */
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 bg-brand/15 border border-brand/30 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <i className="fas fa-clock text-brand text-2xl"></i>
+                <div className="py-4">
+                  {/* Header éxito */}
+                  <div className="text-center mb-7">
+                    <div className="w-20 h-20 bg-green-500/15 border-2 border-green-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <i className="fas fa-check text-green-400 text-3xl"></i>
+                    </div>
+                    <h3 className="text-2xl font-black text-white mb-1">¡Turno solicitado!</h3>
+                    <p className="text-white/45 text-sm max-w-xs mx-auto">
+                      Te confirmamos por WhatsApp a la brevedad.
+                    </p>
                   </div>
-                  <h3 className="text-2xl font-black text-white mb-2">¡Solicitud recibida!</h3>
-                  <p className="text-white/50 text-sm mb-6 max-w-xs mx-auto leading-relaxed">
-                    Tu turno está <span className="text-brand font-semibold">pendiente de confirmación</span>. Te vamos a avisar por WhatsApp a la brevedad.
-                  </p>
 
-                  {/* Resumen */}
-                  <div className="bg-[#0d0d0d] border border-white/[.07] rounded-2xl p-5 text-left mb-6 space-y-2.5">
+                  {/* Resumen compacto */}
+                  <div className="bg-[#0d0d0d] border border-white/[.07] rounded-2xl p-5 mb-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/40 text-xs uppercase tracking-wider font-semibold">Resumen del turno</span>
+                      <span className="badge bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 text-[10px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block mr-1"></span>Pendiente de confirmación
+                      </span>
+                    </div>
+                    <div className="divider" style={{height:1,background:'rgba(255,255,255,.05)',margin:'4px 0'}}></div>
                     {[
-                      { icon:'fa-concierge-bell', label:'Servicio',  val: saved.service  },
-                      { icon:'fa-calendar',        label:'Fecha',     val: fechaDisplay(saved.date) },
-                      { icon:'fa-clock',           label:'Horario',   val: saved.time + ' hs'       },
-                      { icon:'fa-user',            label:'Nombre',    val: saved.name     },
-                      { icon:'fa-phone',           label:'Celular',   val: saved.phone    },
-                      { icon:'fa-car',             label:'Vehículo',  val: saved.vehicle  },
+                      { icon:'fa-concierge-bell', label:'Servicio', val: saved.service,           highlight: true },
+                      { icon:'fa-calendar',       label:'Fecha',    val: fechaDisplay(saved.date), highlight: true },
+                      { icon:'fa-clock',          label:'Horario',  val: saved.time + ' hs',       highlight: true },
+                      { icon:'fa-user',           label:'Nombre',   val: saved.name                              },
+                      { icon:'fa-phone',          label:'Celular',  val: saved.phone                             },
+                      ...(saved.vehicle ? [{ icon:'fa-car', label:'Vehículo', val: saved.vehicle }] : []),
                     ].map(r => (
                       <div key={r.label} className="flex items-center gap-3 text-sm">
-                        <i className={`fas ${r.icon} text-brand text-xs w-4 text-center`}></i>
-                        <span className="text-white/40 w-16 flex-shrink-0">{r.label}</span>
-                        <span className="text-white/85 font-medium">{r.val}</span>
+                        <i className={`fas ${r.icon} text-brand text-xs w-4 text-center flex-shrink-0`}></i>
+                        <span className="text-white/35 w-16 flex-shrink-0 text-xs">{r.label}</span>
+                        <span className={`font-medium ${r.highlight ? 'text-white' : 'text-white/70'}`}>{r.val}</span>
                       </div>
                     ))}
                   </div>
 
+                  {/* CTA WhatsApp */}
                   <a href={`${WA_BASE}?text=${encodeURIComponent(`Hola! Acabo de solicitar un turno online. Soy ${saved?.name}, pedí ${saved?.service} para el ${fechaDisplay(saved?.date)} a las ${saved?.time}hs. ¿Me podés confirmar?`)}`}
                     target="_blank" rel="noopener noreferrer"
-                    className="w-full mt-2 mb-4 py-3.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
-                    <i className="fab fa-whatsapp text-base"></i>
-                    Confirmar por WhatsApp ahora
+                    className="w-full py-4 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold rounded-2xl flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-green-500/20 text-base mb-3">
+                    <i className="fab fa-whatsapp text-xl"></i>
+                    Acelerar confirmación por WhatsApp
                   </a>
 
-                  <button onClick={reset}
-                    className="text-white/35 hover:text-white/65 text-sm transition-colors underline underline-offset-2">
-                    Hacer otra reserva
-                  </button>
+                  <p className="text-white/25 text-xs text-center mb-5">
+                    O esperá — te contactamos nosotros en el día.
+                  </p>
+
+                  <div className="border-t border-white/[.05] pt-4 text-center">
+                    <button onClick={reset}
+                      className="text-white/30 hover:text-white/60 text-sm transition-colors">
+                      <i className="fas fa-plus mr-1.5 text-xs"></i>Hacer otra reserva
+                    </button>
+                  </div>
                 </div>
 
               ) : (
@@ -1134,7 +1170,7 @@
                         <option value="">Seleccionar servicio</option>
                         {SERVICES.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
                       </select>
-                      {err.service && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                      {err.service && <p className="text-red-400/70 text-[11px] mt-1">{err.service}</p>}
                     </div>
 
                     {/* Fecha */}
@@ -1144,7 +1180,7 @@
                         onChange={e => { upd('date', e.target.value); upd('time', ''); }}
                         min={new Date().toISOString().split('T')[0]}
                         className={base('date')} />
-                      {err.date && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                      {err.date && <p className="text-red-400/70 text-[11px] mt-1">{err.date}</p>}
                       {form.date && getAvailableTimes(form.date).length === 0 && (
                         <p className="text-red-400/70 text-[11px] mt-1">Domingos cerrado</p>
                       )}
@@ -1162,7 +1198,7 @@
                         </option>
                         {getAvailableTimes(form.date).map(t => <option key={t} value={t}>{t} hs</option>)}
                       </select>
-                      {err.time && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                      {err.time && <p className="text-red-400/70 text-[11px] mt-1">{err.time}</p>}
                     </div>
 
                     {/* Nombre */}
@@ -1170,7 +1206,7 @@
                       <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Nombre completo *</label>
                       <input type="text" value={form.name} onChange={e => upd('name', e.target.value)}
                         placeholder="Tu nombre y apellido" autoComplete="name" className={base('name')} />
-                      {err.name && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                      {err.name && <p className="text-red-400/70 text-[11px] mt-1">{err.name}</p>}
                     </div>
 
                     {/* Teléfono */}
@@ -1178,7 +1214,7 @@
                       <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Teléfono *</label>
                       <input type="tel" value={form.phone} onChange={e => upd('phone', e.target.value)}
                         placeholder="11 1234-5678" autoComplete="tel" className={base('phone')} />
-                      {err.phone && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
+                      {err.phone && <p className="text-red-400/70 text-[11px] mt-1">{err.phone}</p>}
                     </div>
 
                     {/* Vehículo */}

@@ -892,8 +892,16 @@ function TurnosPage({bookings, setBookings, services, config, clients, setClient
           action={<button className="btn btn-brand btn-sm" onClick={()=>setModal('new')}><i className="fas fa-plus"></i>Crear turno</button>} />
       ) : (
         <div className="space-y-3">
-          {filtered.map(b => (
-            <div key={b.id} className="card p-4 hover:border-[#2a2a2a] transition-colors">
+          {filtered.map(b => {
+            const isNew = b.createdAt && (Date.now() - new Date(b.createdAt).getTime()) < 24*60*60*1000 && b.status==='pending';
+            return (
+            <div key={b.id} className={`card p-4 transition-colors ${isNew ? 'border-brand/30 hover:border-brand/50' : 'hover:border-[#2a2a2a]'}`}>
+              {isNew && (
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-brand uppercase tracking-wider mb-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block animate-pulse"></span>
+                  Nuevo turno
+                </div>
+              )}
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-brand/10 flex-shrink-0 flex items-center justify-center">
                   <i className="fas fa-user text-brand text-sm"></i>
@@ -923,6 +931,25 @@ function TurnosPage({bookings, setBookings, services, config, clients, setClient
               </div>
               {/* Actions */}
               <div className="flex gap-2 flex-wrap mt-3 pt-3 border-t border-[#1a1a1a]">
+                {/* Botones de acción rápida según estado */}
+                {b.status === 'pending' && (
+                  <button className="btn btn-sm" style={{background:'rgba(34,197,94,.15)',color:'#22c55e',border:'1px solid rgba(34,197,94,.3)'}}
+                    onClick={()=>changeStatus(b.id,'confirmed')}>
+                    <i className="fas fa-check"></i><span className="hidden sm:inline">Confirmar</span>
+                  </button>
+                )}
+                {b.status === 'confirmed' && (
+                  <button className="btn btn-sm" style={{background:'rgba(59,130,246,.15)',color:'#60a5fa',border:'1px solid rgba(59,130,246,.3)'}}
+                    onClick={()=>changeStatus(b.id,'in_progress')}>
+                    <i className="fas fa-play"></i><span className="hidden sm:inline">Iniciar</span>
+                  </button>
+                )}
+                {b.status === 'in_progress' && (
+                  <button className="btn btn-sm" style={{background:'rgba(168,85,247,.15)',color:'#c084fc',border:'1px solid rgba(168,85,247,.3)'}}
+                    onClick={()=>changeStatus(b.id,'completed')}>
+                    <i className="fas fa-flag-checkered"></i><span className="hidden sm:inline">Finalizar</span>
+                  </button>
+                )}
                 <select className="input text-xs py-1.5 px-2 w-auto flex-shrink-0 h-8"
                   value={b.status} onChange={e=>changeStatus(b.id,e.target.value)}>
                   {Object.entries(STATUS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
@@ -963,7 +990,8 @@ function TurnosPage({bookings, setBookings, services, config, clients, setClient
                 </button>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
 
