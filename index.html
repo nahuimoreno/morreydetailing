@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Morrey Detailing - Detailing Premium Automotriz</title>
-  <meta name="description" content="Morrey Detailing - Especialistas en detailing automotriz premium en Buenos Aires. Lavados, tapizados, cerámicos, acrílicos y restauración de ópticas. Agendá tu turno.">
+  <title>Morrey Detailing | Lavado, Cerámico y Tapizados — Buenos Aires</title>
+  <meta name="description" content="Lavado detallado, tratamiento cerámico, limpieza de tapizados y más. 500+ autos trabajados en Buenos Aires. Turnos rápidos, precio cerrado, resultado garantizado. Consultá hoy.">
   <link rel="icon" href="logo.png" type="image/png">
   <link rel="apple-touch-icon" href="logo.png">
 
@@ -97,6 +97,9 @@
     /* WA float label */
     .wa-float-label { max-width: 0; overflow: hidden; white-space: nowrap; transition: max-width .3s ease, opacity .3s ease; opacity: 0; }
     .wa-float-btn:hover .wa-float-label { max-width: 160px; opacity: 1; }
+    @media (max-width: 640px) {
+      .wa-float-label { max-width: 160px; opacity: 1; }
+    }
 
     /* Proceso steps */
     @keyframes stepPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
@@ -117,13 +120,13 @@
     const WA_BASE = `https://wa.me/${PHONE}`;
 
     const SERVICES = [
-      { icon:'fa-car-side',      name:'Lavado Detallado Premium',   desc:'Limpieza integral exterior e interior con atención a cada milímetro. Técnicas y productos de nivel profesional para un resultado impecable.' },
-      { icon:'fa-couch',         name:'Limpieza de Tapizados',      desc:'Extracción profunda de suciedad, manchas y bacterias en telas, cueros y alcántara. Interior renovado y desinfectado desde el primer tratamiento.' },
-      { icon:'fa-cog',           name:'Limpieza de Motor',          desc:'Desengrasado, higienización y presentación del compartimiento del motor con productos especializados y técnicas seguras para todos los componentes.' },
-      { icon:'fa-sun',           name:'Abrillantado',               desc:'Pulido profesional para eliminar marcas, oxidación superficial y opacidad. La pintura recupera su profundidad y brillo original.' },
-      { icon:'fa-shield-alt',    name:'Tratamiento Acrílico',       desc:'Capa protectora de larga duración que potencia el brillo, facilita la limpieza y protege la pintura de los agentes externos.' },
-      { icon:'fa-gem',           name:'Tratamiento Cerámico',       desc:'La máxima protección disponible. Recubrimiento nanoCerámico hidrofóbico que preserva, protege y realza la pintura por años.' },
-      { icon:'fa-lightbulb',     name:'Restauración de Ópticas',    desc:'Recuperación y pulido de faros opacos, amarillados o rayados. Visibilidad mejorada y estética renovada sin necesidad de reemplazo.' },
+      { icon:'fa-car-side',      name:'Lavado Detallado Premium',   time:'~2 hs',   desc:'Limpieza integral exterior e interior con atención a cada milímetro. Técnicas y productos de nivel profesional para un resultado impecable.' },
+      { icon:'fa-couch',         name:'Limpieza de Tapizados',      time:'~3 hs',   desc:'Extracción profunda de suciedad, manchas y bacterias en telas, cueros y alcántara. Interior renovado y desinfectado desde el primer tratamiento.' },
+      { icon:'fa-cog',           name:'Limpieza de Motor',          time:'~1.5 hs', desc:'Desengrasado, higienización y presentación del compartimiento del motor con productos especializados y técnicas seguras para todos los componentes.' },
+      { icon:'fa-sun',           name:'Abrillantado',               time:'~4 hs',   desc:'Pulido profesional para eliminar marcas, oxidación superficial y opacidad. La pintura recupera su profundidad y brillo original.' },
+      { icon:'fa-shield-alt',    name:'Tratamiento Acrílico',       time:'~3 hs',   desc:'Capa protectora de larga duración que potencia el brillo, facilita la limpieza y protege la pintura de los agentes externos.' },
+      { icon:'fa-gem',           name:'Tratamiento Cerámico',       time:'~1 día',  desc:'La máxima protección disponible. Recubrimiento nanoCerámico hidrofóbico que preserva, protege y realza la pintura por años.' },
+      { icon:'fa-lightbulb',     name:'Restauración de Ópticas',    time:'~1 hs',   desc:'Recuperación y pulido de faros opacos, amarillados o rayados. Visibilidad mejorada y estética renovada sin necesidad de reemplazo.' },
     ];
 
     const GALLERY = Array.from({ length: 34 }, (_, i) => `${i + 1}.jpg`);
@@ -136,11 +139,11 @@
     ];
 
     const WHY_US = [
-      { icon:'fa-user-check',        title:'Atención personalizada',     desc:'Analizamos cada vehículo individualmente para definir el tratamiento ideal.' },
-      { icon:'fa-flask',             title:'Productos profesionales',    desc:'Trabajamos exclusivamente con marcas premium reconocidas en la industria.' },
-      { icon:'fa-eye',               title:'Resultados visibles',        desc:'La diferencia es inmediata y notable. Cada trabajo apunta a un resultado excepcional.' },
-      { icon:'fa-award',             title:'Técnicos especializados',    desc:'Equipo con años de experiencia en detailing automotriz de alta gama.' },
-      { icon:'fa-hand-holding-heart',title:'Cuidado total del vehículo', desc:'Tratamos tu auto con el mismo respeto y cuidado que si fuera el nuestro.' },
+      { icon:'fa-flask',             title:'Koch Chemie, Sonax, Gyeon',          desc:'Usamos las marcas que usan los mejores detailers del mundo. Sin productos baratos que dañen la pintura.' },
+      { icon:'fa-camera',            title:'Antes y después documentado',         desc:'Fotografiamos cada trabajo antes de empezar. Vos ves exactamente qué cambió y por qué valió la pena.' },
+      { icon:'fa-handshake',         title:'Precio cerrado antes de empezar',     desc:'Te damos el precio antes de arrancar. Sin sorpresas ni cargos extra al final del trabajo.' },
+      { icon:'fa-shield-alt',        title:'Tu auto en las mejores manos',        desc:'Guantes siempre, superficies protegidas, llave tratada con cuidado. Lo manejamos como si fuera nuestro.' },
+      { icon:'fa-map-marker-alt',    title:'Zona CABA y GBA',                    desc:'Atendemos en todo Buenos Aires. Consultanos si estás lejos — siempre buscamos la forma.' },
     ];
 
     function getAvailableTimes(dateStr) {
@@ -153,8 +156,7 @@
     }
 
     const NAV_LINKS = [
-      { label:'Inicio',    id:'inicio'    },
-      { label:'Servicios', id:'servicios' },
+      { label:'Precios',   id:'servicios' },
       { label:'Galería',   id:'galeria'   },
       { label:'Nosotros',  id:'nosotros'  },
       { label:'Turnos',    id:'turnos'    },
@@ -320,7 +322,7 @@
             <div className="h-anim-3 flex flex-col sm:flex-row gap-3 justify-center mb-14">
               <button onClick={() => goTo('turnos')}
                 className="px-9 py-4 bg-brand text-black font-bold text-base rounded-2xl hover:bg-brand-dark transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand/25 active:translate-y-0">
-                <i className="fas fa-calendar-check mr-2"></i>Reservar turno gratis
+                <i className="fas fa-calendar-check mr-2"></i>Reservar mi turno →
               </button>
               <a href={`${WA_BASE}?text=${encodeURIComponent('Hola! Quiero consultar precios y disponibilidad.')}`}
                 target="_blank" rel="noopener noreferrer"
@@ -363,7 +365,7 @@
       const data = [
         { val:'5+',   label:'Años en el rubro'          },
         { val:'500+', label:'Vehículos entregados'       },
-        { val:'98%',  label:'Clientes que vuelven'       },
+        { val:'98%',  label:'Vuelven a elegirnos'          },
         { val:'1 día', label:'Para confirmar tu turno'  },
       ];
       return (
@@ -424,7 +426,8 @@
             <div className="w-12 h-12 bg-brand/[.1] border border-brand/[.2] rounded-xl flex items-center justify-center mb-5 group-hover:bg-brand/[.15] transition-colors duration-300">
               <i className={`fas ${s.icon} text-brand text-lg`}></i>
             </div>
-            <h3 className="text-white font-bold text-lg mb-3 leading-snug">{s.name}</h3>
+            <h3 className="text-white font-bold text-lg mb-1 leading-snug">{s.name}</h3>
+            <span className="text-white/25 text-xs mb-3 inline-flex items-center gap-1"><i className="fas fa-clock text-[10px]"></i>{s.time}</span>
             <p className="text-white/45 text-sm leading-relaxed flex-1">{s.desc}</p>
             <a href={`${WA_BASE}?text=${encodeURIComponent(waMsg)}`}
               target="_blank" rel="noopener noreferrer"
@@ -463,7 +466,7 @@
           n: '03',
           icon: 'fa-car-side',
           title: 'Llevá tu auto',
-          desc: 'Venís en el horario pactado. Nosotros nos encargamos de todo el resto.',
+          desc: 'Llegás, dejás el auto y te vas. Cuando volvés, lo recibís como si fuera nuevo.',
           cta: null,
         },
       ];
@@ -918,15 +921,22 @@
                   <i className="fas fa-chevron-right text-sm"></i>
                 </button>
               </div>
+              {/* Dot indicators — mobile */}
+              <div className="flex justify-center gap-2 mt-4 md:hidden">
+                {items.map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                ))}
+              </div>
+
               {/* CTA para dejar reseña */}
               {!submitted && (
                 <div className="text-center mt-12">
                   <div ref={ctaRef} className="rv">
                     <p className="text-white/40 text-sm mb-4">¿Ya pasaste por Morrey Detailing? Contanos tu experiencia.</p>
                     <button onClick={()=>setShowForm(p=>!p)}
-                      className="inline-flex items-center gap-2 border border-brand/30 text-brand hover:bg-brand hover:text-black transition-all px-6 py-3 rounded-xl font-semibold text-sm">
+                      className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${showForm ? 'bg-white/10 text-white/60 hover:bg-white/15' : 'bg-brand text-black hover:bg-brand-dark'}`}>
                       <i className={`fas ${showForm?'fa-times':'fa-star'}`}></i>
-                      {showForm ? 'Cerrar formulario' : 'Dejar mi reseña'}
+                      {showForm ? 'Cerrar formulario' : '★ Dejar mi opinión'}
                     </button>
                   </div>
                 </div>
@@ -969,7 +979,8 @@
 
       const submit = () => {
         const e = {};
-        Object.keys(form).forEach(k => { if (!form[k].trim()) e[k] = true; });
+        const required = ['service','date','time','name','phone'];
+        required.forEach(k => { if (!form[k].trim()) e[k] = true; });
         setErr(e);
         if (Object.keys(e).length) return;
 
@@ -1059,6 +1070,13 @@
                     ))}
                   </div>
 
+                  <a href={`${WA_BASE}?text=${encodeURIComponent(`Hola! Acabo de solicitar un turno online. Soy ${saved?.name}, pedí ${saved?.service} para el ${fechaDisplay(saved?.date)} a las ${saved?.time}hs. ¿Me podés confirmar?`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="w-full mt-2 mb-4 py-3.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+                    <i className="fab fa-whatsapp text-base"></i>
+                    Confirmar por WhatsApp ahora
+                  </a>
+
                   <button onClick={reset}
                     className="text-white/35 hover:text-white/65 text-sm transition-colors underline underline-offset-2">
                     Hacer otra reserva
@@ -1127,10 +1145,9 @@
 
                     {/* Vehículo */}
                     <div>
-                      <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Vehículo *</label>
+                      <label className="block text-white/45 text-[11px] font-semibold uppercase tracking-wider mb-2">Vehículo <span className="text-white/25 normal-case font-normal">(opcional)</span></label>
                       <input type="text" value={form.vehicle} onChange={e => upd('vehicle', e.target.value)}
                         placeholder="Ej: Toyota Corolla 2021" className={base('vehicle')} />
-                      {err.vehicle && <p className="text-red-400/70 text-[11px] mt-1">Requerido</p>}
                     </div>
                   </div>
 
@@ -1240,7 +1257,7 @@
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-5">
-              <p className="text-white/18 text-xs">© 2025 Morrey Detailing. Todos los derechos reservados.</p>
+              <p className="text-white/18 text-xs">© 2026 Morrey Detailing. Todos los derechos reservados.</p>
               <div className="flex items-center gap-4">
                 <span className="text-white/18 text-xs">Buenos Aires, Argentina</span>
                 <a href="admin.html" className="text-white/[.08] hover:text-white/25 text-xs transition-colors">Admin</a>
